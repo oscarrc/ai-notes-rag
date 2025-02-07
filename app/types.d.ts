@@ -6,6 +6,7 @@ interface FileNode {
   name: string;
   path: string;
   extension?: string;
+  content?: any;
   children?: FileNode[];
 }
 

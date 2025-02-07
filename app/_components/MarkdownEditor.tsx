@@ -60,15 +60,15 @@ const MarkdownEditor = () => {
   };
 
   const onChange = useCallback((editorState: any) => {
-    // if (debounceTimeout.current) {
-    //   clearTimeout(debounceTimeout.current);
-    // }
-    // debounceTimeout.current = setTimeout(() => {
-    //   editorState.read(() => {
-    //     const markdown = $convertToMarkdownString(TRANSFORMERS);
-    //     saveMarkdown(markdown);
-    //   });
-    // }, 500);
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+    debounceTimeout.current = setTimeout(() => {
+      editorState.read(() => {
+        const markdown = $convertToMarkdownString(TRANSFORMERS);
+        saveMarkdown(markdown);
+      });
+    }, 500);
   }, []);
 
   return (

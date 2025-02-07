@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { insertFile } from '../_utils/utils';
+import { removeFile, insertFile, replaceFile } from '../_utils/utils';
 
 export const useFilesQuery = () => {
   const queryClient = useQueryClient();
@@ -21,6 +21,25 @@ export const useFilesQuery = () => {
     return newFile;
   }
 
+  const updateFile = async (file: FileNode) => {
+    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.path}`, {
+      method: 'PUT',
+      body: JSON.stringify(file)
+    });
+
+    const updatedFile = await data.json();
+    return updatedFile;
+  }
+
+  const deleteFile = async (file: FileNode) => {
+    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.path}`, {
+      method: 'DELETE'
+    });
+
+    const deleted = await data.json();
+    return deleted;
+  }
+
   const { data: files, refetch } = useQuery({
     queryKey: ['files'],
     queryFn: getFiles,
@@ -30,7 +49,25 @@ export const useFilesQuery = () => {
     mutationFn: (file: FileNode) => createFile(file),
     onSuccess: (newFile) => {
       queryClient.setQueryData(['files'], (files: FileNode[]) =>
-        insertFile([...files], newFile)
+        insertFile(files, newFile)
+      );
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (file: FileNode) => updateFile(file),
+    onSuccess: (updatedFile, file) => {
+      queryClient.setQueryData(['files'], (files: FileNode[]) =>
+        replaceFile(files, file, updatedFile)
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (file: FileNode) => deleteFile(file),
+    onSuccess: (_, file) => {
+      queryClient.setQueryData(['files'], (files: FileNode[]) =>
+        removeFile(files, file)
       );
     },
   });
@@ -45,6 +82,8 @@ export const useFilesQuery = () => {
   return {
     files,
     refetch,
-    create: createMutation
+    create: createMutation,
+    update: updateMutation,
+    delete: deleteMutation
   };
 };

@@ -8,7 +8,9 @@ const Editor = () => {
         <Breadcrumbs />
       </aside>
       <div className="flex flex-col flex-1 prose w-full max-w-6xl p-4">        
-        <MdEditor />
+        <div className='h-full'>
+          <MdEditor />
+        </div>
       </div>
     </section>
   );

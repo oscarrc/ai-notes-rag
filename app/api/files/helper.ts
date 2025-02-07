@@ -62,9 +62,48 @@ export const createFile = (baseDir: string, item: FileNode): FileNode => {
   
   if (item?.extension) {
     fs.writeFileSync(newPath, "");
-    return { name: path.basename(uniqueName, item.extension), path: `/${item.path}/${uniqueName}`, extension: item.extension };
+    return { name: path.basename(uniqueName, item.extension), path: `${item.path}/${uniqueName}`, extension: item.extension };
   } else {
     fs.mkdirSync(newPath);
-    return { name: uniqueName, path: `/${item.path}/${uniqueName}`, children: [] };
+    return { name: uniqueName, path: `${item.path}/${uniqueName}`, children: [] };
+  }
+};
+
+export const getFile = (filePath: string): FileNode | null => {
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return null;
+
+  const name = path.basename(filePath, path.extname(filePath));
+  const extension = path.extname(filePath);
+  const content = fs.readFileSync(filePath, 'utf-8');
+
+  return { name, path: filePath, extension, content };
+};
+
+export const updateFile = (filePath: string, fileNode: FileNode): FileNode | null => {
+  if (!fs.existsSync(filePath)) return null;
+
+  const isFile = !!fileNode.extension;
+  const newPath = fileNode.path;
+
+  if (newPath && newPath !== filePath) {
+    fs.renameSync(filePath, newPath);
+  }
+
+  if (isFile && fileNode.content !== undefined) {
+    fs.writeFileSync(newPath, fileNode.content, 'utf-8');
+  }
+
+  return { ...fileNode, path: newPath };
+};
+
+export const deleteFile = (filePath: string): void => {
+  if (!fs.existsSync(filePath)) throw new Error('File not found');
+
+  const stat = fs.statSync(filePath);
+
+  if (stat.isDirectory()) {
+    fs.rmSync(filePath, { recursive: true, force: true });
+  } else {
+    fs.unlinkSync(filePath);
   }
 };
