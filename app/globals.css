@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply h-dvh overflow-hidden;
+  }
+}
+
+@layer components {
+  .tab:not(.tab-active) {
+    @apply border border-base-200 bg-base-300;
+  }
+
+  .tab:not(.tab-active):hover > .btn {
+    @apply opacity-100;
+  }
+
+  .tabs-lifted
+    > .tab:is(.tab-active, [aria-selected='true']):not(.tab-disabled):not(
+      [disabled]
+    ):first-child:before {
+    display: none;
+  }
+}
+
+@layer utilities {
+  .grid-max-auto {
+    grid-template-columns: max-content auto;
+  }
+
+  .grid-nav-auto {
+    grid-template-rows: 2.5rem auto;
+  }
+}
