@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect, useState } from 'react';
+import React, { RefObject, useState } from 'react';
 import { BsSearch } from 'react-icons/bs';
 
 interface SearchProps {
