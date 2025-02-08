@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
-import { removeFile, insertFile, replaceFile } from '../_utils/utils';
+import { removeFile, insertFile, replaceFile } from '../_utils/files';
 
 export const useFilesQuery = () => {
   const queryClient = useQueryClient();
