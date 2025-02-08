@@ -88,8 +88,8 @@ export const useFilesQuery = () => {
   return {
     files,
     refetch,
-    create: createMutation,
-    update: updateMutation,
-    delete: deleteMutation,
+    createFile: createMutation.mutate,
+    updateFile: updateMutation.mutate,
+    deleteFile: deleteMutation.mutate,
   };
 };
