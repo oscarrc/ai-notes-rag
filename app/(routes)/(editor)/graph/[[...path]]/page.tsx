@@ -1,3 +1,5 @@
-const Graph = () => {
-  return <section></section>;
+const GraphTab = () => {
+  return <section>GRAPH</section>;
 };
+
+export default GraphTab

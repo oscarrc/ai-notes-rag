@@ -10,10 +10,13 @@ import SidebarDrawer from './_components/SidebarDrawer';
 import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
 import SidebarFileTree from './_components/SidebarFileTree';
 import Search from '@/app/_components/Search';
+import useNavigationStore from '@/app/_store/navigationStore';
+import { chatTab, graphTab } from '@/app/_utils/tabs';
 
 const Sidebar = () => {
   const { isMinWidth } = useBreakpoint('lg');
   const { files } = useFilesQuery();
+  const { addTab } = useNavigationStore();
 
   const [isOpen, setIsOpen] = useState(true);
   const searchRef = useRef<HTMLDialogElement | null>(null);
@@ -33,10 +36,10 @@ const Sidebar = () => {
         >
           <BsSearch className='mx-auto h-4 w-4' />
         </ButtonSquare>
-        <ButtonSquare className='tooltip tooltip-right' size='sm' tip='Chat'>
+        <ButtonSquare className='tooltip tooltip-right' size='sm' tip='Chat' onClick={() => addTab(chatTab)}>
           <BsChatDots className='mx-auto h-4 w-4' />
         </ButtonSquare>
-        <ButtonSquare className='tooltip tooltip-right' size='sm' tip='Graph'>
+        <ButtonSquare className='tooltip tooltip-right' size='sm' tip='Graph' onClick={() => addTab(graphTab)}>
           <PiGraphLight className='mx-auto h-6 w-6' />
         </ButtonSquare>
       </SidebarShortcuts>
