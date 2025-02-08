@@ -15,12 +15,12 @@ const SidebarFileTree = ({ files }: SidebarFileTreeProps) => {
   const isActive = (node: FileNode) => {
     return selectedNode?.path === node.path;
   };
-  
+
   const handleClick = (e: React.MouseEvent, node: FileNode) => {
     const hasModifier = e.ctrlKey || e.metaKey;
-    
+
     selectNode(node); // Ensure folders are marked as selected
-    
+
     if (node.children) {
       // If it's a folder, toggle its open state instead of treating it like a file
       setOpenFolders((prev) => ({
@@ -34,15 +34,22 @@ const SidebarFileTree = ({ files }: SidebarFileTreeProps) => {
         : setTab({ name: node.name, path: node.path });
     }
   };
-  
+
   const renderTree = (nodes: FileNode[]) => {
     return nodes?.map((node, index) => {
       if (node.children) {
         const isOpen = openFolders[node.path];
         return (
           <li key={index}>
-            <button onClick={(e) => handleClick(e, node)} className={`w-full flex items-center ${isActive(node) ? 'bg-base-200' : ''}`}>
-              {isOpen ? <VscFolderOpened className="h-4 w-4" /> : <VscFolder className="h-4 w-4" />}
+            <button
+              onClick={(e) => handleClick(e, node)}
+              className={`flex w-full items-center ${isActive(node) ? 'bg-base-200' : ''}`}
+            >
+              {isOpen ? (
+                <VscFolderOpened className='h-4 w-4' />
+              ) : (
+                <VscFolder className='h-4 w-4' />
+              )}
               {node.name}
             </button>
             {isOpen && <ul>{renderTree(node.children)}</ul>}
@@ -51,8 +58,11 @@ const SidebarFileTree = ({ files }: SidebarFileTreeProps) => {
       } else {
         return (
           <li key={index}>
-            <button onClick={(e) => handleClick(e, node)} className={`w-full flex items-center ${isActive(node) ? 'bg-base-200' : ''}`}>
-              <VscFile className="h-4 w-4" />
+            <button
+              onClick={(e) => handleClick(e, node)}
+              className={`flex w-full items-center ${isActive(node) ? 'bg-base-200' : ''}`}
+            >
+              <VscFile className='h-4 w-4' />
               {node.name}
             </button>
           </li>

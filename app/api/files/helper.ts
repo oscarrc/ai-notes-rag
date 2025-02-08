@@ -3,10 +3,7 @@ import path from 'path';
 
 const vault = process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
 
-export const fetchFiles = (
-  dir: string,
-  relativePath = ''
-): FileNode[] => {
+export const fetchFiles = (dir: string, relativePath = ''): FileNode[] => {
   const results: FileNode[] = [];
   const baseDir = path.join(process.cwd(), dir);
   const entries = fs.readdirSync(baseDir, { withFileTypes: true });
@@ -34,14 +31,20 @@ export const fetchFiles = (
   return results;
 };
 
-const getUniqueName = (dir: string, baseName: string, extension?: string): string => {
+const getUniqueName = (
+  dir: string,
+  baseName: string,
+  extension?: string
+): string => {
   const files = new Set(fs.readdirSync(dir));
 
   if (!files.has(extension ? `${baseName}${extension}` : baseName)) {
     return extension ? `${baseName}${extension}` : baseName;
   }
 
-  const regex = new RegExp(`^${baseName} \\((\\d+)\\)${extension ? `\\${extension}` : ''}$`);
+  const regex = new RegExp(
+    `^${baseName} \\((\\d+)\\)${extension ? `\\${extension}` : ''}$`
+  );
   const existingNumbers = new Set<number>();
 
   for (const file of files) {
@@ -52,25 +55,36 @@ const getUniqueName = (dir: string, baseName: string, extension?: string): strin
   let count = 1;
   while (existingNumbers.has(count)) count++;
 
-  return extension ? `${baseName} (${count})${extension}` : `${baseName} (${count})`;
+  return extension
+    ? `${baseName} (${count})${extension}`
+    : `${baseName} (${count})`;
 };
 
 export const createFile = (baseDir: string, item: FileNode): FileNode => {
   const targetDir = path.join(process.cwd(), baseDir, item.path);
   const uniqueName = getUniqueName(targetDir, item.name, item.extension);
   const newPath = path.join(targetDir, uniqueName);
-  
+
   if (item?.extension) {
-    fs.writeFileSync(newPath, "");
-    return { name: path.basename(uniqueName, item.extension), path: `${item.path}/${uniqueName}`, extension: item.extension };
+    fs.writeFileSync(newPath, '');
+    return {
+      name: path.basename(uniqueName, item.extension),
+      path: `${item.path}/${uniqueName}`,
+      extension: item.extension,
+    };
   } else {
     fs.mkdirSync(newPath);
-    return { name: uniqueName, path: `${item.path}/${uniqueName}`, children: [] };
+    return {
+      name: uniqueName,
+      path: `${item.path}/${uniqueName}`,
+      children: [],
+    };
   }
 };
 
 export const getFile = (filePath: string): FileNode | null => {
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) return null;
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory())
+    return null;
 
   const name = path.basename(filePath, path.extname(filePath));
   const extension = path.extname(filePath);
@@ -79,7 +93,10 @@ export const getFile = (filePath: string): FileNode | null => {
   return { name, path: filePath, extension, content };
 };
 
-export const updateFile = (filePath: string, fileNode: FileNode): FileNode | null => {
+export const updateFile = (
+  filePath: string,
+  fileNode: FileNode
+): FileNode | null => {
   if (!fs.existsSync(filePath)) return null;
 
   const isFile = !!fileNode.extension;

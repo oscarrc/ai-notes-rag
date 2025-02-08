@@ -14,31 +14,37 @@ export const useFilesQuery = () => {
   const createFile = async (file: FileNode) => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/files`, {
       method: 'POST',
-      body: JSON.stringify(file)
+      body: JSON.stringify(file),
     });
 
     const newFile = await data.json();
     return newFile;
-  }
+  };
 
   const updateFile = async (file: FileNode) => {
-    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.path}`, {
-      method: 'PUT',
-      body: JSON.stringify(file)
-    });
+    const data = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.path}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(file),
+      }
+    );
 
     const updatedFile = await data.json();
     return updatedFile;
-  }
+  };
 
   const deleteFile = async (file: FileNode) => {
-    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.path}`, {
-      method: 'DELETE'
-    });
+    const data = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.path}`,
+      {
+        method: 'DELETE',
+      }
+    );
 
     const deleted = await data.json();
     return deleted;
-  }
+  };
 
   const { data: files, refetch } = useQuery({
     queryKey: ['files'],
@@ -84,6 +90,6 @@ export const useFilesQuery = () => {
     refetch,
     create: createMutation,
     update: updateMutation,
-    delete: deleteMutation
+    delete: deleteMutation,
   };
 };

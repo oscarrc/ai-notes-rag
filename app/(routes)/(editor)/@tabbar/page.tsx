@@ -26,7 +26,7 @@ const Tabbar = () => {
   }, [activeTab, tabs]);
 
   return (
-    <div className='navbar sticky min-h-10 items-end bg-base-200 p-0 z-50'>
+    <div className='navbar sticky z-50 min-h-10 items-end bg-base-200 p-0'>
       <TabList>
         {tabs.map((tab, index) => (
           <Tab

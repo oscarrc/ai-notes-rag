@@ -12,5 +12,5 @@ interface FileNode {
 
 enum FileType {
   FILE = 'file',
-  DIR = 'dir'
+  DIR = 'dir',
 }

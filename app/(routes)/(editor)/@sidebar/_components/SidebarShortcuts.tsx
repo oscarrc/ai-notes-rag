@@ -11,7 +11,7 @@ interface SidebarActionsProps {
 const SidebarShortcuts = ({ onToggle, children }: SidebarActionsProps) => {
   return (
     <div className='grid-nav-auto grid border-r-2 border-neutral'>
-      <div className='flex items-center justify-center bg-base-200 px-2 border-b border-base-300'>
+      <div className='flex items-center justify-center border-b border-base-300 bg-base-200 px-2'>
         <ButtonSquare className='mx-auto' size='sm' onClick={onToggle}>
           <VscLayoutSidebarLeft className='h-4 w-4' />
         </ButtonSquare>

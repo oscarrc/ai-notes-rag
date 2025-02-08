@@ -33,4 +33,8 @@
   .grid-nav-auto {
     grid-template-rows: 2.5rem auto;
   }
+
+  .place-self-start-center {
+    place-self: self-start center;
+  }
 }

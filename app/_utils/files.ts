@@ -1,7 +1,9 @@
+const VAULT_PATH = process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
 
-const VAULT_PATH = process.env.NEXT_PUBLIC_VAULT_PATH || "/vault";
-
-export const insertFile = (files: FileNode[], newFile: FileNode): FileNode[] => {
+export const insertFile = (
+  files: FileNode[],
+  newFile: FileNode
+): FileNode[] => {
   const parentPath = newFile.path.substring(0, newFile.path.lastIndexOf('/'));
 
   // If the parent is "/vault", insert at the root level
@@ -10,7 +12,7 @@ export const insertFile = (files: FileNode[], newFile: FileNode): FileNode[] => 
   }
 
   const insertRecursively = (nodes: FileNode[]): FileNode[] => {
-    return nodes.map(node => {
+    return nodes.map((node) => {
       if (!node.children) return node;
 
       if (node.path === parentPath) {
@@ -24,20 +26,26 @@ export const insertFile = (files: FileNode[], newFile: FileNode): FileNode[] => 
   return insertRecursively(files);
 };
 
-export const replaceFile = (files: FileNode[], targetNode: FileNode, updatedNode: FileNode): FileNode[] => {
+export const replaceFile = (
+  files: FileNode[],
+  targetNode: FileNode,
+  updatedNode: FileNode
+): FileNode[] => {
   const targetPath = targetNode.path;
 
-  if (files.some(node => node.path === targetPath)) {
-    return files.map(node => (node.path === targetPath ? updatedNode : node));
+  if (files.some((node) => node.path === targetPath)) {
+    return files.map((node) => (node.path === targetPath ? updatedNode : node));
   }
 
   const replaceRecursively = (nodes: FileNode[]): FileNode[] => {
-    return nodes.map(node => {
+    return nodes.map((node) => {
       if (!node.children) return node;
 
       return {
         ...node,
-        children: replaceRecursively(node.children).map(child => (child.path === targetPath ? updatedNode : child)),
+        children: replaceRecursively(node.children).map((child) =>
+          child.path === targetPath ? updatedNode : child
+        ),
       };
     });
   };
@@ -45,25 +53,25 @@ export const replaceFile = (files: FileNode[], targetNode: FileNode, updatedNode
   return replaceRecursively(files);
 };
 
-
-export const removeFile = (files: FileNode[], targetNode: FileNode): FileNode[] => {
+export const removeFile = (
+  files: FileNode[],
+  targetNode: FileNode
+): FileNode[] => {
   const targetPath = targetNode.path;
 
-  if (files.some(node => node.path === targetPath)) {
-    return files.filter(node => node.path !== targetPath);
+  if (files.some((node) => node.path === targetPath)) {
+    return files.filter((node) => node.path !== targetPath);
   }
 
   const deleteRecursively = (nodes: FileNode[]): FileNode[] => {
     return nodes
-      .map(node => {
+      .map((node) => {
         if (!node.children) return node;
 
         return { ...node, children: deleteRecursively(node.children) };
       })
-      .filter(node => node.path !== targetPath);
+      .filter((node) => node.path !== targetPath);
   };
 
   return deleteRecursively(files);
 };
-
-

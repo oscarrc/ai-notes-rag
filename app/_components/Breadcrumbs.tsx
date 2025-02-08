@@ -12,10 +12,7 @@ const Breadcrumbs = () => {
         <ul>
           {crumbs.map((crumb, index) => (
             <li
-              className={`
-                ${index < crumbs.length - 1 ? 'text-base-content/50' : ''}
-                ${index == 0 ? 'uppercase' : ''}
-              `}
+              className={` ${index < crumbs.length - 1 ? 'text-base-content/50' : ''} ${index == 0 ? 'uppercase' : ''} `}
               key={crumb}
             >
               {crumb}

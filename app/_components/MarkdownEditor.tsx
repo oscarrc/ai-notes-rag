@@ -75,7 +75,9 @@ const MarkdownEditor = () => {
     <LexicalComposer initialConfig={editorConfig}>
       <MarkdownShortcutPlugin transformers={TRANSFORMERS} />
       <RichTextPlugin
-        contentEditable={<ContentEditable className='editor-input focus-visible:outline-none' />}
+        contentEditable={
+          <ContentEditable className='editor-input focus-visible:outline-none' />
+        }
         ErrorBoundary={LexicalErrorBoundary}
       />
       <HistoryPlugin />
