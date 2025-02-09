@@ -13,6 +13,7 @@ import Search from '@/app/_components/Search';
 import useNavigationStore from '@/app/_store/navigationStore';
 import { chatTab, graphTab } from '@/app/_utils/tabs';
 import SidebarSkeleton from './_components/SidebarSkeleton';
+import { showModal } from '@/app/_utils/modals';
 
 const Sidebar = () => {
   const { isMinWidth } = useBreakpoint('lg');
@@ -20,7 +21,6 @@ const Sidebar = () => {
   const { addTab } = useNavigationStore();
 
   const [isOpen, setIsOpen] = useState(true);
-  const searchRef = useRef<HTMLDialogElement | null>(null);
 
   useEffect(() => {
     setIsOpen(isMinWidth);
@@ -33,7 +33,7 @@ const Sidebar = () => {
           className='tooltip tooltip-right'
           size='sm'
           tip='Search'
-          onClick={() => searchRef?.current?.showModal()}
+          onClick={() => showModal('search')}
         >
           <BsSearch className='mx-auto h-4 w-4' />
         </ButtonSquare>
@@ -57,7 +57,6 @@ const Sidebar = () => {
       <SidebarDrawer isOpen={isOpen}>
         {isLoading ? <SidebarSkeleton /> : <SidebarFileTree files={files} />}
       </SidebarDrawer>
-      <Search ref={searchRef} />
     </nav>
   );
 };

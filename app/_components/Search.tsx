@@ -1,11 +1,9 @@
-import React, { RefObject, useState } from 'react';
+'use client'
+
+import { useState } from 'react';
 import { BsSearch } from 'react-icons/bs';
 
-interface SearchProps {
-  ref: RefObject<HTMLDialogElement | null>;
-}
-
-const Search = ({ ref }: SearchProps) => {
+const Search = () => {
   const [selected, setSelected] = useState(0);
   const items = ['Item 1', 'Item 2', 'Item 3'];
 
@@ -26,7 +24,7 @@ const Search = ({ ref }: SearchProps) => {
   };
 
   return (
-    <dialog id='search' className='modal' ref={ref} onKeyDown={handleKey}>
+    <dialog id='search' className='modal' onKeyDown={handleKey}>
       <div className='place-self-start-center modal-box mt-[15dvh] flex grid max-h-[75dvh] grid-rows-[1fr] flex-col gap-2 overflow-hidden rounded-lg p-0'>
         <div className='flex items-center border-b border-base-content/20 px-4'>
           <BsSearch className='h-4 w-4' />

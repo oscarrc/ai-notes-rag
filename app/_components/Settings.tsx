@@ -1,17 +1,15 @@
 'use client'
 
-import { RefObject } from "react";
+import { useRef } from "react";
 import { VscClose } from 'react-icons/vsc';
-
-interface SettingsProps {
-    ref: RefObject<HTMLDialogElement | null>;
-}
   
-const Settings = ({ ref }: SettingsProps) => {
+const Settings = () => {
+    const dialogRef = useRef<HTMLDialogElement | null>(null)
+
     return (
-        <dialog id="my_modal_2" className="modal" ref={ref}>
+        <dialog id="settings" className="modal" ref={dialogRef}>
             <div className="modal-box">                
-                <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => ref?.current?.close()}>
+                <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" onClick={() => dialogRef?.current?.close()}>
                     <VscClose className="h-4 w-4" />
                 </button>
                 
@@ -50,7 +48,7 @@ const Settings = ({ ref }: SettingsProps) => {
                 </div>
                 </div>
                 <div className='modal-actions flex gap-2 justify-end mt-8'>                    
-                    <button className="btn btn-sm" onClick={() => ref?.current?.close()}>Cancel</button>
+                    <button className="btn btn-sm" onClick={() => dialogRef?.current?.close()}>Cancel</button>
                     <button className="btn btn-sm btn-primary">Save</button>
                 </div>
             </div>

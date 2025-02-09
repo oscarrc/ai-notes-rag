@@ -3,6 +3,7 @@
 import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
 import useNavigationStore from '@/app/_store/navigationStore';
 import { getFilePath } from '@/app/_utils/files';
+import { showModal } from '@/app/_utils/modals';
 import { chatTab } from '@/app/_utils/tabs';
 
 const NewTab = () => {
@@ -26,7 +27,12 @@ const NewTab = () => {
             <kbd className='kbd kbd-xs'>Ctrl</kbd>
             <kbd className='kbd kbd-xs'>A</kbd>
           </div>
-          <button className='btn btn-link justify-end'>Search file</button>
+          <button 
+            className='btn btn-link justify-end'
+            onClick={ () => showModal('search') }
+          >
+            Search file
+          </button>
           <div className='flex gap-2'>
             <kbd className='kbd kbd-xs'>Ctrl</kbd>
             <kbd className='kbd kbd-xs'>K</kbd>
