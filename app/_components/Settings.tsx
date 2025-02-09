@@ -50,7 +50,7 @@ const Settings = ({ ref }: SettingsProps) => {
                 </div>
                 </div>
                 <div className='modal-actions flex gap-2 justify-end mt-8'>                    
-                    <button className="btn btn-sm">Cancel</button>
+                    <button className="btn btn-sm" onClick={() => ref?.current?.close()}>Cancel</button>
                     <button className="btn btn-sm btn-primary">Save</button>
                 </div>
             </div>
