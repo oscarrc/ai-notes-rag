@@ -5,10 +5,12 @@ import useNavigationStore from "../_store/navigationStore";
 import { useFilesQuery } from "../_hooks/useFilesQuery";
 import { chatTab } from "../_utils/tabs";
 import { getFilePath } from "../_utils/files";
+import { useRouter } from "next/navigation";
 
 const Shortcuts = () => {
   const { addTab, selectedNode } = useNavigationStore();
   const { createFile } = useFilesQuery();
+  const router = useRouter();
   
   const handleShortcut = async (e: KeyboardEvent) => {
     const isShortcut = e.composed && e.ctrlKey;

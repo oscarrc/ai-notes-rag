@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { removeFile, insertFile, replaceFile } from '../_utils/files';
+import useNavigationStore from '../_store/navigationStore';
 
 export const useFilesQuery = () => {
   const queryClient = useQueryClient();
+  const { addTab } = useNavigationStore();
 
   const getFiles = async () => {
     const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/files`);
@@ -61,6 +63,7 @@ export const useFilesQuery = () => {
       queryClient.setQueryData(['files'], (files: FileNode[]) =>
         insertFile(files, newFile)
       );
+      addTab(newFile);
     },
   });
 
