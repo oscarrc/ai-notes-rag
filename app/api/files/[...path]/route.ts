@@ -37,7 +37,7 @@ export async function PUT(
   if (!params.path)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
-  const filePath = path.join(BASE_PATH, ...params.path);
+  const filePath = path.join(DATA_PATH, ...params.path);
   const fileNode: FileNode = await req.json();
 
   try {
@@ -59,8 +59,8 @@ export async function DELETE(
   if (!params.path)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
-  const filePath = path.join(BASE_PATH, ...params.path);
-
+  const filePath = path.join(DATA_PATH, ...params.path);
+  
   try {
     deleteFile(filePath);
     return NextResponse.json({ message: 'File deleted successfully' });

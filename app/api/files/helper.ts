@@ -97,13 +97,14 @@ export const updateFile = (
   filePath: string,
   fileNode: FileNode
 ): FileNode | null => {
-  if (!fs.existsSync(filePath)) return null;
+  const absolutePath = path.join(process.cwd(), filePath);  
+  if (!fs.existsSync(absolutePath)) return null;
 
   const isFile = !!fileNode.extension;
   const newPath = fileNode.path;
 
-  if (newPath && newPath !== filePath) {
-    fs.renameSync(filePath, newPath);
+  if (newPath && newPath !== absolutePath) {
+    fs.renameSync(absolutePath, newPath);
   }
 
   if (isFile && fileNode.content !== undefined) {
@@ -114,13 +115,15 @@ export const updateFile = (
 };
 
 export const deleteFile = (filePath: string): void => {
-  if (!fs.existsSync(filePath)) throw new Error('File not found');
+  const absolutePath = path.join(process.cwd(), filePath); 
+  
+  if (!fs.existsSync(absolutePath)) throw new Error('File not found');
 
-  const stat = fs.statSync(filePath);
+  const stat = fs.statSync(absolutePath);
 
   if (stat.isDirectory()) {
-    fs.rmSync(filePath, { recursive: true, force: true });
+    fs.rmSync(absolutePath, { recursive: true, force: true });
   } else {
-    fs.unlinkSync(filePath);
+    fs.unlinkSync(absolutePath);
   }
 };
