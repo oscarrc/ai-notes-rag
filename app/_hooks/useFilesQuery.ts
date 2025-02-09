@@ -46,7 +46,11 @@ export const useFilesQuery = () => {
     return deleted;
   };
 
-  const { data: files, refetch, isLoading } = useQuery({
+  const {
+    data: files,
+    refetch,
+    isLoading,
+  } = useQuery({
     queryKey: ['files'],
     queryFn: getFiles,
   });

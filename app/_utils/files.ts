@@ -75,3 +75,9 @@ export const removeFile = (
 
   return deleteRecursively(files);
 };
+
+export const getFilePath = (file: FileNode | null) => {
+  if (!file) return process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
+  if (file?.children) return file.path;
+  return file.path.substring(0, file.path.lastIndexOf('/'));
+};

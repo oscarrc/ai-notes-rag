@@ -60,7 +60,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
   const filePath = path.join(DATA_PATH, ...params.path);
-  
+
   try {
     deleteFile(filePath);
     return NextResponse.json({ message: 'File deleted successfully' });

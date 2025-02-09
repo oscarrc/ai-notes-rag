@@ -1,3 +1,5 @@
+import Shortcuts from "@/app/_components/Shortcuts";
+
 interface EditorLayoutProps extends LayoutProps {
   sidebar: React.ReactNode;
   tabbar: React.ReactNode;
@@ -11,6 +13,7 @@ const EditorLayout = ({ children, sidebar, tabbar }: EditorLayoutProps) => {
         {tabbar}
         <main className='flex max-h-dvh w-full flex-col overflow-y-auto'>
           {children}
+          <Shortcuts />
         </main>
       </div>
     </div>

@@ -37,19 +37,25 @@ const Sidebar = () => {
         >
           <BsSearch className='mx-auto h-4 w-4' />
         </ButtonSquare>
-        <ButtonSquare className='tooltip tooltip-right' size='sm' tip='Chat' onClick={() => addTab(chatTab)}>
+        <ButtonSquare
+          className='tooltip tooltip-right'
+          size='sm'
+          tip='Chat'
+          onClick={() => addTab(chatTab)}
+        >
           <BsChatDots className='mx-auto h-4 w-4' />
         </ButtonSquare>
-        <ButtonSquare className='tooltip tooltip-right' size='sm' tip='Graph' onClick={() => addTab(graphTab)}>
+        <ButtonSquare
+          className='tooltip tooltip-right'
+          size='sm'
+          tip='Graph'
+          onClick={() => addTab(graphTab)}
+        >
           <PiGraphLight className='mx-auto h-6 w-6' />
         </ButtonSquare>
       </SidebarShortcuts>
       <SidebarDrawer isOpen={isOpen}>
-        {
-          isLoading
-            ? <SidebarSkeleton />
-            : <SidebarFileTree files={files} />
-        }
+        {isLoading ? <SidebarSkeleton /> : <SidebarFileTree files={files} />}
       </SidebarDrawer>
       <Search ref={searchRef} />
     </nav>

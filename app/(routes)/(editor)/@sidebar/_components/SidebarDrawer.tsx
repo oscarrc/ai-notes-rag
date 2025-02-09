@@ -1,10 +1,16 @@
 'use client';
 
-import { VscNewFile, VscNewFolder, VscRefresh, VscTrash  } from 'react-icons/vsc';
+import {
+  VscNewFile,
+  VscNewFolder,
+  VscRefresh,
+  VscTrash,
+} from 'react-icons/vsc';
 import ButtonSquare from '@/app/_components/ButtonSquare';
 import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
 import useNavigationStore from '@/app/_store/navigationStore';
 import { useMemo } from 'react';
+import { getFilePath } from '@/app/_utils/files';
 
 interface SidebarDrawerProps extends LayoutProps {
   isOpen: boolean;
@@ -13,12 +19,6 @@ interface SidebarDrawerProps extends LayoutProps {
 const SidebarDrawer = ({ isOpen, children }: SidebarDrawerProps) => {
   const { createFile, deleteFile, refetch } = useFilesQuery();
   const { selectedNode } = useNavigationStore();
-
-  const filePath = useMemo(() => {
-    if (!selectedNode) return process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
-    if (selectedNode?.children) return selectedNode.path;
-    return selectedNode.path.substring(0, selectedNode.path.lastIndexOf('/'));
-  }, [selectedNode]);
 
   return (
     <div
@@ -30,7 +30,7 @@ const SidebarDrawer = ({ isOpen, children }: SidebarDrawerProps) => {
           onClick={() =>
             createFile({
               name: 'New File',
-              path: filePath,
+              path: getFilePath(selectedNode),
               extension: '.md',
             })
           }
@@ -39,7 +39,9 @@ const SidebarDrawer = ({ isOpen, children }: SidebarDrawerProps) => {
         </ButtonSquare>
         <ButtonSquare
           size='sm'
-          onClick={() => createFile({ name: 'New Folder', path: filePath })}
+          onClick={() =>
+            createFile({ name: 'New Folder', path: getFilePath(selectedNode) })
+          }
         >
           <VscNewFolder className='h-4 w-4' />
         </ButtonSquare>
@@ -47,7 +49,7 @@ const SidebarDrawer = ({ isOpen, children }: SidebarDrawerProps) => {
           size='sm'
           onClick={() => selectedNode && deleteFile(selectedNode)}
         >
-          <VscTrash  className='h-4 w-4' />
+          <VscTrash className='h-4 w-4' />
         </ButtonSquare>
         <ButtonSquare size='sm' onClick={refetch}>
           <VscRefresh className='h-4 w-4' />

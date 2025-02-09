@@ -1,4 +1,14 @@
+'use client';
+
+import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
+import useNavigationStore from '@/app/_store/navigationStore';
+import { getFilePath } from '@/app/_utils/files';
+import { chatTab } from '@/app/_utils/tabs';
+
 const NewTab = () => {
+  const { addTab, selectedNode } = useNavigationStore();
+  const { createFile } = useFilesQuery();
+
   return (
     <section className='flex h-full items-center justify-center p-8'>
       <div className='align-center flex max-w-md flex-col gap-16'>
@@ -6,7 +16,12 @@ const NewTab = () => {
           No file is open
         </h2>
         <div className='col-gap-4 grid grid-cols-2 items-center'>
-          <button className='btn btn-link justify-end'>Ask AI</button>
+          <button
+            className='btn btn-link justify-end'
+            onClick={() => addTab(chatTab)}
+          >
+            Ask AI
+          </button>
           <div className='flex gap-2'>
             <kbd className='kbd kbd-xs'>Ctrl</kbd>
             <kbd className='kbd kbd-xs'>A</kbd>
@@ -16,7 +31,18 @@ const NewTab = () => {
             <kbd className='kbd kbd-xs'>Ctrl</kbd>
             <kbd className='kbd kbd-xs'>K</kbd>
           </div>
-          <button className='btn btn-link justify-end'>Create file</button>
+          <button
+            className='btn btn-link justify-end'
+            onClick={() =>
+              createFile({
+                name: 'New File',
+                path: getFilePath(selectedNode),
+                extension: '.md',
+              })
+            }
+          >
+            Create file
+          </button>
           <div className='flex gap-2'>
             <kbd className='kbd kbd-xs'>Ctrl</kbd>
             <kbd className='kbd kbd-xs'>N</kbd>

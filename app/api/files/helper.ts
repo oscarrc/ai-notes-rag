@@ -97,7 +97,7 @@ export const updateFile = (
   filePath: string,
   fileNode: FileNode
 ): FileNode | null => {
-  const absolutePath = path.join(process.cwd(), filePath);  
+  const absolutePath = path.join(process.cwd(), filePath);
   if (!fs.existsSync(absolutePath)) return null;
 
   const isFile = !!fileNode.extension;
@@ -115,8 +115,8 @@ export const updateFile = (
 };
 
 export const deleteFile = (filePath: string): void => {
-  const absolutePath = path.join(process.cwd(), filePath); 
-  
+  const absolutePath = path.join(process.cwd(), filePath);
+
   if (!fs.existsSync(absolutePath)) throw new Error('File not found');
 
   const stat = fs.statSync(absolutePath);
