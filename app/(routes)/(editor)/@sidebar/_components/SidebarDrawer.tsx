@@ -9,7 +9,6 @@ import {
 import ButtonSquare from '@/app/_components/ButtonSquare';
 import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
 import useNavigationStore from '@/app/_store/navigationStore';
-import { useMemo } from 'react';
 import { getFilePath } from '@/app/_utils/files';
 
 interface SidebarDrawerProps extends LayoutProps {

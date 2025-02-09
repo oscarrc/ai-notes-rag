@@ -1,6 +1,8 @@
 'use client';
 
 import ButtonSquare from '@/app/_components/ButtonSquare';
+import Settings from '@/app/_components/Settings';
+import { useRef } from 'react';
 import { VscLayoutSidebarLeft, VscSettingsGear } from 'react-icons/vsc';
 
 interface SidebarActionsProps {
@@ -9,6 +11,8 @@ interface SidebarActionsProps {
 }
 
 const SidebarShortcuts = ({ onToggle, children }: SidebarActionsProps) => {
+  const settingsRef = useRef<HTMLDialogElement | null>(null);
+
   return (
     <div className='grid-nav-auto grid border-r-2 border-neutral'>
       <div className='flex items-center justify-center border-b border-base-300 bg-base-200 px-2'>
@@ -21,11 +25,13 @@ const SidebarShortcuts = ({ onToggle, children }: SidebarActionsProps) => {
         <ButtonSquare
           className='tooltip tooltip-right'
           size='sm'
-          tip='Settings'
+          tip='Settings'          
+          onClick={() => settingsRef?.current?.showModal()}
         >
           <VscSettingsGear className='mx-auto h-4 w-4' />
         </ButtonSquare>
-      </div>
+      </div>      
+      <Settings ref={settingsRef} />
     </div>
   );
 };
