@@ -46,7 +46,7 @@ export const useFilesQuery = () => {
     return deleted;
   };
 
-  const { data: files, refetch } = useQuery({
+  const { data: files, refetch, isLoading } = useQuery({
     queryKey: ['files'],
     queryFn: getFiles,
   });
@@ -88,6 +88,7 @@ export const useFilesQuery = () => {
   return {
     files,
     refetch,
+    isLoading,
     createFile: createMutation.mutate,
     updateFile: updateMutation.mutate,
     deleteFile: deleteMutation.mutate,

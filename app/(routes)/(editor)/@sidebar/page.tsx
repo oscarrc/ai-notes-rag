@@ -12,10 +12,11 @@ import SidebarFileTree from './_components/SidebarFileTree';
 import Search from '@/app/_components/Search';
 import useNavigationStore from '@/app/_store/navigationStore';
 import { chatTab, graphTab } from '@/app/_utils/tabs';
+import SidebarSkeleton from './_components/SidebarSkeleton';
 
 const Sidebar = () => {
   const { isMinWidth } = useBreakpoint('lg');
-  const { files } = useFilesQuery();
+  const { files, isLoading } = useFilesQuery();
   const { addTab } = useNavigationStore();
 
   const [isOpen, setIsOpen] = useState(true);
@@ -44,7 +45,11 @@ const Sidebar = () => {
         </ButtonSquare>
       </SidebarShortcuts>
       <SidebarDrawer isOpen={isOpen}>
-        <SidebarFileTree files={files} />
+        {
+          isLoading
+            ? <SidebarSkeleton />
+            : <SidebarFileTree files={files} />
+        }
       </SidebarDrawer>
       <Search ref={searchRef} />
     </nav>
