@@ -51,7 +51,7 @@ const NewTab = () => {
           </button>
           <div className='flex gap-2'>
             <kbd className='kbd kbd-xs'>Ctrl</kbd>
-            <kbd className='kbd kbd-xs'>N</kbd>
+            <kbd className='kbd kbd-xs'>F</kbd>
           </div>
         </div>
       </div>
