@@ -23,6 +23,12 @@ export const useFilesQuery = () => {
     return newFile;
   };
 
+  const getFile = async (path: string) => {
+    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}api/files/${path}`);
+    const content = await data.json();
+    return content;
+  };
+
   const updateFile = async (file: FileNode) => {
     const data = await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL}api/files/${file.path}`,
@@ -55,6 +61,11 @@ export const useFilesQuery = () => {
   } = useQuery({
     queryKey: ['files'],
     queryFn: getFiles,
+  });
+
+  const file = (path: string) => useQuery({
+    queryKey: ['files', path],
+    queryFn: async () => await getFile(path),
   });
 
   const createMutation = useMutation({
@@ -94,6 +105,7 @@ export const useFilesQuery = () => {
 
   return {
     files,
+    file,
     refetch,
     isLoading,
     createFile: createMutation.mutate,
