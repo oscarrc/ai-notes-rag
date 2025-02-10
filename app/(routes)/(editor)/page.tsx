@@ -4,6 +4,7 @@ import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
 import useNavigationStore from '@/app/_store/navigationStore';
 import { getFilePath } from '@/app/_utils/files';
 import { showModal } from '@/app/_utils/modals';
+import { IS_APPLE } from '@/app/_utils/shortcuts';
 import { chatTab } from '@/app/_utils/tabs';
 
 const NewTab = () => {
@@ -24,8 +25,8 @@ const NewTab = () => {
             Ask AI
           </button>
           <div className='flex gap-2'>
-            <kbd className='kbd kbd-xs'>Ctrl</kbd>
-            <kbd className='kbd kbd-xs'>A</kbd>
+            <kbd className='kbd kbd-xs'>{ IS_APPLE ? 'Cmd' : 'Ctrl' }</kbd>
+            <kbd className='kbd kbd-xs'>a</kbd>
           </div>
           <button 
             className='btn btn-link justify-end'
@@ -34,8 +35,8 @@ const NewTab = () => {
             Search file
           </button>
           <div className='flex gap-2'>
-            <kbd className='kbd kbd-xs'>Ctrl</kbd>
-            <kbd className='kbd kbd-xs'>K</kbd>
+            <kbd className='kbd kbd-xs'>{ IS_APPLE ? 'Cmd' : 'Ctrl' }</kbd>
+            <kbd className='kbd kbd-xs'>k</kbd>
           </div>
           <button
             className='btn btn-link justify-end'
@@ -50,8 +51,8 @@ const NewTab = () => {
             Create file
           </button>
           <div className='flex gap-2'>
-            <kbd className='kbd kbd-xs'>Ctrl</kbd>
-            <kbd className='kbd kbd-xs'>F</kbd>
+            <kbd className='kbd kbd-xs'>{ IS_APPLE ? 'Cmd' : 'Ctrl' }</kbd>
+            <kbd className='kbd kbd-xs'>f</kbd>
           </div>
         </div>
       </div>

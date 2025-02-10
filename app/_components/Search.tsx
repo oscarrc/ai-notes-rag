@@ -36,11 +36,8 @@ const Search = () => {
         </div>
         <ul className='menu w-full flex-nowrap overflow-y-auto'>
           {items.map((item, index) => (
-            <li
-              className={`${selected === index ? 'bg-base-200' : ''}`}
-              key={index}
-            >
-              <a>{item}</a>
+            <li key={index} >
+              <a className={`${selected === index ? 'bg-base-300' : ''}`}>{item}</a>
             </li>
           ))}
         </ul>

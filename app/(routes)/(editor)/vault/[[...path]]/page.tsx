@@ -1,5 +1,3 @@
-'use client'
-
 import Breadcrumbs from '@/app/_components/Breadcrumbs';
 import MarkdownEditor from '@/app/_components/editor';
 
