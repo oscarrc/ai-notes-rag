@@ -28,6 +28,7 @@ import {
     TableRowNode,
   } from '@lexical/table';
   import { $createTextNode, $isParagraphNode, $isTextNode, LexicalNode, ParagraphNode } from 'lexical';
+import { $createImageNode, $isImageNode, ImageNode } from '../nodes/ImageNode';
   
 //   import { $createImageNode, $isImageNode, ImageNode } from '../../nodes/ImageNode';
     
@@ -50,6 +51,31 @@ import {
     type: 'element',
   };
   
+  export const IMAGE: TextMatchTransformer = {
+    dependencies: [ImageNode],
+    export: (node) => {
+      if (!$isImageNode(node)) {
+        return null;
+      }
+  
+      return `![${node.getAltText()}](${node.getSrc()})`;
+    },
+    importRegExp: /!(?:\[([^[]*)\])(?:\(([^(]+)\))/,
+    regExp: /!(?:\[([^[]*)\])(?:\(([^(]+)\))$/,
+    replace: (textNode, match) => {
+      const [, altText, src] = match;
+      const imageNode = $createImageNode({
+        altText,
+        maxWidth: 800,
+        src,
+      });
+      textNode.replace(imageNode);
+    },
+    trigger: ')',
+    type: 'text-match',
+  };
+  
+   
   // Very primitive table setup
   const TABLE_ROW_REG_EXP = /^(?:\|)(.+)(?:\|)\s?$/;
   const TABLE_ROW_DIVIDER_REG_EXP = /^(\| ?:?-*:? ?)+\|\s?$/;
@@ -226,7 +252,7 @@ import {
   export const CUSTOM_TRANSFORMERS: Array<Transformer> = [
     TABLE,
     HR,
-    // IMAGE,
+    IMAGE,
     CHECK_LIST,
     PRESERVE_NEWLINES,
     ...ELEMENT_TRANSFORMERS,

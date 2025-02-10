@@ -29,6 +29,8 @@ import AutoSavePlugin from './plugins/AutoSavePlugin';
 import LinkPlugin from './plugins/LinkPlugin';
 import AutoLinkPlugin from './plugins/AutoLinkPlugin';
 
+import { ImageNode } from './nodes/ImageNode';
+
 interface EditorConfig {
   namespace: string;
   theme: Record<string, unknown>;
@@ -48,6 +50,7 @@ const editorConfig: EditorConfig = {
     CodeNode,
     HeadingNode,
     HorizontalRuleNode,
+    ImageNode,
     LinkNode,
     ListItemNode,
     ListNode,
