@@ -19,10 +19,10 @@ const DraggableBlockPlugin = ({ anchorElem = document.body }: { anchorElem?: HTM
       targetLineRef={targetLineRef as RefObject<HTMLElement>}
       menuComponent={
         <div className='rounded-sm p-1 cursor-grab opacity-0 absolute left-0 top-0 will-change-transform active:cursor-grabbing' ref={menuRef}>
-          <VscGripper className='h-4 w-4' />
+          <VscGripper className='h-6 w-6' />
         </div>
       }
-      targetLineComponent={<span className='absolute left-0 top-0 h-2 bg-secondary pointer-events-none will-change-transform' ref={targetLineRef} />}
+      targetLineComponent={<span className='absolute left-0 top-0 h-1 bg-secondary pointer-events-none will-change-transform' ref={targetLineRef} />}
       isOnMenu={isOnMenu}
     />
   );
