@@ -6,16 +6,16 @@ import { useFilesQuery } from "../_hooks/useFilesQuery";
 import { chatTab } from "../_utils/tabs";
 import { getFilePath } from "../_utils/files";
 import { showModal } from "../_utils/modals";
+import { isShortcut } from "../_utils/shortcuts";
 
 const Shortcuts = () => {
   const { addTab, selectedNode } = useNavigationStore();
   const { createFile } = useFilesQuery();
   
   const handleShortcut = async (e: KeyboardEvent) => {
-    const isShortcut = e.composed && e.ctrlKey;
     const code = e.code;
 
-    if(!isShortcut) return;
+    if(!isShortcut(e)) return;
 
     switch(code){
       case 'KeyA':
