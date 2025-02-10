@@ -14,9 +14,7 @@ const NewTab = () => {
   return (
     <section className='flex h-full items-center justify-center p-8'>
       <div className='align-center flex max-w-md flex-col gap-16'>
-        <h2 className='text-center text-4xl font-bold'>
-          No file is open
-        </h2>
+        <h2 className='text-center text-4xl font-bold'>No file is open</h2>
         <div className='col-gap-4 grid grid-cols-2 items-center'>
           <button
             className='btn btn-link justify-end'
@@ -25,17 +23,17 @@ const NewTab = () => {
             Ask AI
           </button>
           <div className='flex gap-2'>
-            <kbd className='kbd kbd-xs'>{ IS_APPLE ? 'Cmd' : 'Ctrl' }</kbd>
+            <kbd className='kbd kbd-xs'>{IS_APPLE ? 'Cmd' : 'Ctrl'}</kbd>
             <kbd className='kbd kbd-xs'>a</kbd>
           </div>
-          <button 
+          <button
             className='btn btn-link justify-end'
-            onClick={ () => showModal('search') }
+            onClick={() => showModal('search')}
           >
             Search file
           </button>
           <div className='flex gap-2'>
-            <kbd className='kbd kbd-xs'>{ IS_APPLE ? 'Cmd' : 'Ctrl' }</kbd>
+            <kbd className='kbd kbd-xs'>{IS_APPLE ? 'Cmd' : 'Ctrl'}</kbd>
             <kbd className='kbd kbd-xs'>k</kbd>
           </div>
           <button
@@ -51,7 +49,7 @@ const NewTab = () => {
             Create file
           </button>
           <div className='flex gap-2'>
-            <kbd className='kbd kbd-xs'>{ IS_APPLE ? 'Cmd' : 'Ctrl' }</kbd>
+            <kbd className='kbd kbd-xs'>{IS_APPLE ? 'Cmd' : 'Ctrl'}</kbd>
             <kbd className='kbd kbd-xs'>f</kbd>
           </div>
         </div>

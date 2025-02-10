@@ -22,12 +22,12 @@ const SidebarShortcuts = ({ onToggle, children }: SidebarActionsProps) => {
         <ButtonSquare
           className='tooltip tooltip-right'
           size='sm'
-          tip='Settings'          
+          tip='Settings'
           onClick={() => showModal('settings')}
         >
           <VscSettingsGear className='mx-auto h-4 w-4' />
         </ButtonSquare>
-      </div>      
+      </div>
     </div>
   );
 };

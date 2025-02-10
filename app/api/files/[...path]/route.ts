@@ -33,7 +33,7 @@ export async function GET(
 export async function PUT(
   req: Request,
   { params }: { params: { path?: string[] } }
-) {   
+) {
   if (!params.path)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
