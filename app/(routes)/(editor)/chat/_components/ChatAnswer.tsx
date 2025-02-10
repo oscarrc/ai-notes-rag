@@ -13,9 +13,9 @@ const ChatAnswer = ({ text }: ChatAnswerProps) => {
                     { text }                
                 </div>
                 <div className="flex gap-2 flex-1 justify-end">
-                    <div className="badge badge-md badge-neutral">Source 1</div>
-                    <div className="badge badge-md badge-neutral">Source 2</div>
-                    <div className="badge badge-md badge-neutral">Source 3</div>
+                    <div className="badge badge-md badge-outline badge-neutral">Source 1</div>
+                    <div className="badge badge-md badge-outline badge-neutral">Source 2</div>
+                    <div className="badge badge-md badge-outline badge-neutral">Source 3</div>
                 </div>
             </div>
             <div className="w-full flex gap-2">
