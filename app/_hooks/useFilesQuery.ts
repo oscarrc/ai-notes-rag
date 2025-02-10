@@ -8,13 +8,13 @@ export const useFilesQuery = () => {
   const { addTab } = useNavigationStore();
 
   const getFiles = async () => {
-    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/files`);
+    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}api/files`);
     const files = await data.json();
     return files;
   };
 
   const createFile = async (file: FileNode) => {
-    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/files`, {
+    const data = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}api/files`, {
       method: 'POST',
       body: JSON.stringify(file),
     });
@@ -25,7 +25,7 @@ export const useFilesQuery = () => {
 
   const updateFile = async (file: FileNode) => {
     const data = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.path}`,
+      `${process.env.NEXT_PUBLIC_BASE_URL}api/files/${file.path}`,
       {
         method: 'PUT',
         body: JSON.stringify(file),
@@ -38,7 +38,7 @@ export const useFilesQuery = () => {
 
   const deleteFile = async (file: FileNode) => {
     const data = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/api/files/${file.path}`,
+      `${process.env.NEXT_PUBLIC_BASE_URL}api/files/${file.path}`,
       {
         method: 'DELETE',
       }

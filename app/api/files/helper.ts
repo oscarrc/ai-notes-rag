@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const vault = process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
+const data = process.env.NEXT_PUBLIC_DATA_PATH || '/data';
 
 export const fetchFiles = (dir: string, relativePath = ''): FileNode[] => {
   const results: FileNode[] = [];
@@ -101,7 +102,7 @@ export const updateFile = (
   if (!fs.existsSync(absolutePath)) return null;
 
   const isFile = !!fileNode.extension;
-  const newPath = fileNode.path;
+  const newPath = path.join(process.cwd(), data, fileNode.path);
 
   if (newPath && newPath !== absolutePath) {
     fs.renameSync(absolutePath, newPath);
