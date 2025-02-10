@@ -10,11 +10,11 @@ const ChatInput = () => {
     }
 
     return (
-        <form className="flex textarea w-full max-w-2xl bg-base-200 items-center pr-2 gap-4" onSubmit={ handleSubmit }>
+        <form className="flex textarea w-full max-w-2xl bg-base-200 items-center pr-2 gap-4 rounded-box" onSubmit={ handleSubmit }>
           <textarea
             placeholder="Send a message"
             autoFocus
-            className="flex-1 bg-transparent  focus-visible:outline-none h-24" />
+            className="flex-1 bg-transparent focus-visible:outline-none h-24" />
           <ButtonSquare size="md" className="btn-neutral self-end">
             <VscSend className="h-6 w-6" />
           </ButtonSquare>

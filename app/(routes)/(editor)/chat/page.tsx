@@ -7,8 +7,8 @@ const ChatTab = () => {
     <section className="flex flex-col flex-1 justify-end p-8">
       <div className="flex flex-col items-center gap-8">
         {/* <h2 className="text-center text-4xl font-bold px-4">Ask any question about your notes</h2> */}
-        <ChatAnswer text='This is a test'/>
         <ChatQuestion text='This is a test'/>
+        <ChatAnswer text='This is a test'/>
         <ChatInput />
       </div>
     </section>
