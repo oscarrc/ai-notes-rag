@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import theme from './theme';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 
 // Import all necessary plugins
@@ -12,8 +13,11 @@ import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPl
 import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
+import ShortcutsPlugin from './plugins/ShortcutsPlugin';
+import CodeHighlightPlugin from './plugins/CodeHighlightPlugin';
+import ToolbarPlugin from './plugins/ToolbarPlugin';
 
-import DraggableBlockPlugin from './plugins/DragableBlockPlugin';
+import DraggableBlockPlugin from './plugins/DraggableBlockPlugin';
 import AutoSavePlugin from './plugins/AutoSavePlugin';
 import LinkPlugin from './plugins/LinkPlugin';
 import AutoLinkPlugin from './plugins/AutoLinkPlugin';
@@ -27,16 +31,13 @@ import { TableNode, TableRowNode, TableCellNode } from '@lexical/table';
 import { ParagraphNode } from 'lexical';
 import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { AutoLinkNode } from '@lexical/link';
-
 import { ImageNode } from './nodes/ImageNode';
 
+// Markdown transformers
 import { CUSTOM_TRANSFORMERS } from './utils/MarkdownTransformers';
 
+// Context for managing the toolbar
 import { ToolbarContext } from './context/ToolbarContext';
-import ShortcutsPlugin from './plugins/ShortcutsPlugin';
-import CodeHighlightPlugin from './plugins/CodeHighlightPlugin';
-import ActionsPlugin from './plugins/ActionsPlugin';
-import ToolbarPlugin from './plugins/ToolbarPlugin';
 
 interface EditorConfig {
   namespace: string;
@@ -47,7 +48,7 @@ interface EditorConfig {
 
 const editorConfig: EditorConfig = {
   namespace: 'MarkdownEditor',
-  theme: {},
+  theme,
   onError: (error: Error) => {
     console.error('Lexical Error:', error);
   },
@@ -83,7 +84,6 @@ const MarkdownEditor = () => {
   return (
     <LexicalComposer initialConfig={editorConfig}>
       <ToolbarContext>
-        <ActionsPlugin />
         <AutoFocusPlugin />
         <AutoLinkPlugin />
         <AutoSavePlugin />

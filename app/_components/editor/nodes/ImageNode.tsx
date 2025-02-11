@@ -66,8 +66,7 @@ export class ImageNode extends DecoratorNode<JSX.Element> {
   }
 
   static importJSON(serializedNode: SerializedImageNode): ImageNode {
-    const { altText, height, width, maxWidth, src } =
-      serializedNode;
+    const { altText, height, width, maxWidth, src } = serializedNode;
     return $createImageNode({
       altText,
       height,
@@ -180,14 +179,7 @@ export function $createImageNode({
   key,
 }: ImagePayload): ImageNode {
   return $applyNodeReplacement(
-    new ImageNode(
-      src,
-      altText,
-      maxWidth,
-      width,
-      height,
-      key
-    )
+    new ImageNode(src, altText, maxWidth, width, height, key)
   );
 }
 

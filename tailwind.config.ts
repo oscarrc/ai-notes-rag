@@ -14,7 +14,7 @@ export default {
     },
   },
   daisyui: {
-    themes: ['nord'],
+    themes: ['dracula'],
   },
   plugins: [daisyui, typography],
 } satisfies Config;
