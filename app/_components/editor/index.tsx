@@ -95,7 +95,7 @@ const MarkdownEditor = () => {
         <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
         <RichTextPlugin
           contentEditable={
-            <div className='prose flex w-full max-w-6xl flex-1 flex-col py-4'>
+            <div className='flex prose w-full max-w-6xl flex-1 flex-col py-4'>
               <div className='relative h-full px-10' ref={onRef}>
                 <ContentEditable className='editor editor-input focus-visible:outline-none' />
               </div>

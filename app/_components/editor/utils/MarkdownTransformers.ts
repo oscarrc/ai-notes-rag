@@ -95,13 +95,11 @@ export const TABLE: ElementTransformer = {
     for (const row of node.getChildren()) {
       const rowOutput = [];
       if (!$isTableRowNode(row)) {
-        // eslint-disable-next-line no-continue
         continue;
       }
 
       let isHeaderRow = false;
       for (const cell of row.getChildren()) {
-        // It's TableCellNode so it's just to make flow happy
         if ($isTableCellNode(cell)) {
           rowOutput.push(
             $convertToMarkdownString(CUSTOM_TRANSFORMERS, cell).replace(
@@ -125,7 +123,6 @@ export const TABLE: ElementTransformer = {
   },
   regExp: TABLE_ROW_REG_EXP,
   replace: (parentNode, _1, match) => {
-    // Header row
     if (TABLE_ROW_DIVIDER_REG_EXP.test(match[0])) {
       const table = parentNode.getPreviousSibling();
       if (!table || !$isTableNode(table)) {
@@ -138,7 +135,6 @@ export const TABLE: ElementTransformer = {
         return;
       }
 
-      // Add header state to row cells
       lastRow.getChildren().forEach((cell) => {
         if (!$isTableCellNode(cell)) {
           return;
@@ -149,7 +145,6 @@ export const TABLE: ElementTransformer = {
         );
       });
 
-      // Remove line
       parentNode.remove();
       return;
     }
@@ -198,7 +193,6 @@ export const TABLE: ElementTransformer = {
       const tableRow = $createTableRowNode();
       table.append(tableRow);
 
-      // eslint-disable-next-line no-plusplus
       for (let i = 0; i < maxCells; i++) {
         tableRow.append(i < cells.length ? cells[i] : $createTableCell(''));
       }
@@ -228,7 +222,6 @@ function getTableColumnsSize(table: TableNode) {
 const $createTableCell = (textContent: string): TableCellNode => {
   textContent = textContent.replace(/\\n/g, '\n');
   const cell = $createTableCellNode(TableCellHeaderStates.NO_STATUS);
-  // eslint-disable-next-line no-use-before-define
   $convertFromMarkdownString(textContent, CUSTOM_TRANSFORMERS, cell);
   return cell;
 };
