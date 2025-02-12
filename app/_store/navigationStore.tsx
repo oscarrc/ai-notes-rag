@@ -54,7 +54,7 @@ const useNavigationStore = create<NavigationState>((set) => ({
 
   setActive: (path) =>
     set((state) => {
-      const index = state.tabs.findIndex((t) => t.path === path);
+      const index = state.tabs.findIndex((t) => t.path === decodeURI(path));
       if (index < 0) return state;
       return { activeTab: index };
     }),

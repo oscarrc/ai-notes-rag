@@ -1,15 +1,26 @@
 'use client';
 
 import { useState } from 'react';
+import theme from './theme';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
+
+// Import all necessary plugins
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
 import { ContentEditable } from '@lexical/react/LexicalContentEditable';
 import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin'
+import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
 import { HorizontalRulePlugin } from '@lexical/react/LexicalHorizontalRulePlugin';
 import { TabIndentationPlugin } from '@lexical/react/LexicalTabIndentationPlugin';
+import ShortcutsPlugin from './plugins/ShortcutsPlugin';
+import CodeHighlightPlugin from './plugins/CodeHighlightPlugin';
+import ToolbarPlugin from './plugins/ToolbarPlugin';
+
+import DraggableBlockPlugin from './plugins/DraggableBlockPlugin';
+import AutoSavePlugin from './plugins/AutoSavePlugin';
+import LinkPlugin from './plugins/LinkPlugin';
+import AutoLinkPlugin from './plugins/AutoLinkPlugin';
 
 // Import all necessary nodes
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
@@ -20,16 +31,10 @@ import { TableNode, TableRowNode, TableCellNode } from '@lexical/table';
 import { ParagraphNode } from 'lexical';
 import { HorizontalRuleNode } from '@lexical/react/LexicalHorizontalRuleNode';
 import { AutoLinkNode } from '@lexical/link';
-
-import useNavigationStore from '@/app/_store/navigationStore';
-
-import { CUSTOM_TRANSFORMERS } from './utils/MarkdownTransformers';
-import DraggableBlockPlugin from './plugins/DragableBlockPlugin';
-import AutoSavePlugin from './plugins/AutoSavePlugin';
-import LinkPlugin from './plugins/LinkPlugin';
-import AutoLinkPlugin from './plugins/AutoLinkPlugin';
-
 import { ImageNode } from './nodes/ImageNode';
+
+// Markdown transformers
+import { CUSTOM_TRANSFORMERS } from './utils/MarkdownTransformers';
 
 interface EditorConfig {
   namespace: string;
@@ -40,7 +45,7 @@ interface EditorConfig {
 
 const editorConfig: EditorConfig = {
   namespace: 'MarkdownEditor',
-  theme: {},
+  theme,
   onError: (error: Error) => {
     console.error('Lexical Error:', error);
   },
@@ -63,8 +68,9 @@ const editorConfig: EditorConfig = {
 };
 
 const MarkdownEditor = () => {
-  const [floatingAnchorElem, setFloatingAnchorElem] = useState<HTMLElement | undefined>();
-  const { tabs, activeTab } = useNavigationStore();
+  const [floatingAnchorElem, setFloatingAnchorElem] = useState<
+    HTMLElement | undefined
+  >();
 
   const onRef = (elem: HTMLDivElement) => {
     if (elem !== null) {
@@ -72,11 +78,12 @@ const MarkdownEditor = () => {
     }
   };
 
-  return (      
+  return (
     <LexicalComposer initialConfig={editorConfig}>
       <AutoFocusPlugin />
       <AutoLinkPlugin />
       <AutoSavePlugin />
+      <CodeHighlightPlugin />
       <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
       <HistoryPlugin />
       <HorizontalRulePlugin />
@@ -85,14 +92,16 @@ const MarkdownEditor = () => {
       <RichTextPlugin
         contentEditable={
           <div className='prose flex w-full max-w-6xl flex-1 flex-col py-4'>
-            <div className="h-full relative px-10" ref={onRef}>
-              <ContentEditable className="editor editor-input focus-visible:outline-none" />
+            <div className='relative h-full px-10' ref={onRef}>
+              <ContentEditable className='editor editor-input focus-visible:outline-none' />
             </div>
           </div>
         }
         ErrorBoundary={LexicalErrorBoundary}
       />
+      <ShortcutsPlugin />
       <TabIndentationPlugin />
+      <ToolbarPlugin />
     </LexicalComposer>
   );
 };

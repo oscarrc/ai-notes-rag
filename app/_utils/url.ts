@@ -1,4 +1,10 @@
-const SUPPORTED_URL_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'sms:', 'tel:']);
+const SUPPORTED_URL_PROTOCOLS = new Set([
+  'http:',
+  'https:',
+  'mailto:',
+  'sms:',
+  'tel:',
+]);
 
 export function sanitizeUrl(url: string): string {
   try {

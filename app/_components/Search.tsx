@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { useState } from 'react';
 import { BsSearch } from 'react-icons/bs';
@@ -36,8 +36,10 @@ const Search = () => {
         </div>
         <ul className='menu w-full flex-nowrap overflow-y-auto'>
           {items.map((item, index) => (
-            <li key={index} >
-              <a className={`${selected === index ? 'bg-base-300' : ''}`}>{item}</a>
+            <li key={index}>
+              <a className={`${selected === index ? 'bg-base-300' : ''}`}>
+                {item}
+              </a>
             </li>
           ))}
         </ul>
