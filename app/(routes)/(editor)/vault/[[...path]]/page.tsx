@@ -1,5 +1,5 @@
 import Breadcrumbs from '@/app/_components/Breadcrumbs';
-import MarkdownEditor from '@/app/_components/editor';
+import MarkdownEditor from '@/app/(routes)/(editor)/vault/_components/editor';
 
 const Editor = () => {
   return (
