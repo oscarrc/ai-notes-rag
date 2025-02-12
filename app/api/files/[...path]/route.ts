@@ -10,13 +10,15 @@ export async function GET(
   req: Request,
   { params }: { params: { path?: string[] } }
 ) {
-  if (!params.path)
+  const { path: filePath } = await params;
+
+  if (!filePath)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
-  const filePath = path.join(BASE_PATH, ...params.path);
+  const fullPath = path.join(BASE_PATH, ...filePath);
 
   try {
-    const fileNode = getFile(filePath);
+    const fileNode = getFile(fullPath);
     if (!fileNode)
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
 
@@ -34,14 +36,16 @@ export async function PUT(
   req: Request,
   { params }: { params: { path?: string[] } }
 ) {
-  if (!params.path)
+  const { path: filePath } = await params;
+
+  if (!filePath)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
-  const filePath = path.join(DATA_PATH, ...params.path);
+  const fullPath = path.join(DATA_PATH, ...filePath);
   const fileNode: FileNode = await req.json();
 
   try {
-    const updatedFile = updateFile(filePath, fileNode);
+    const updatedFile = updateFile(fullPath, fileNode);
     return NextResponse.json(updatedFile);
   } catch (error) {
     console.error(error);
@@ -56,13 +60,15 @@ export async function DELETE(
   req: Request,
   { params }: { params: { path?: string[] } }
 ) {
-  if (!params.path)
+  const { path: filePath } = await params;
+
+  if (!filePath)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
-  const filePath = path.join(DATA_PATH, ...params.path);
+  const fullPath = path.join(DATA_PATH, ...filePath);
 
   try {
-    deleteFile(filePath);
+    deleteFile(fullPath);
     return NextResponse.json({ message: 'File deleted successfully' });
   } catch (error) {
     console.error(error);
