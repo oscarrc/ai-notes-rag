@@ -36,9 +36,6 @@ import { ImageNode } from './nodes/ImageNode';
 // Markdown transformers
 import { CUSTOM_TRANSFORMERS } from './utils/MarkdownTransformers';
 
-// Context for managing the toolbar
-import { ToolbarContext } from './context/ToolbarContext';
-
 interface EditorConfig {
   namespace: string;
   theme: Record<string, unknown>;
@@ -83,30 +80,28 @@ const MarkdownEditor = () => {
 
   return (
     <LexicalComposer initialConfig={editorConfig}>
-      <ToolbarContext>
-        <AutoFocusPlugin />
-        <AutoLinkPlugin />
-        <AutoSavePlugin />
-        <CodeHighlightPlugin />
-        <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
-        <HistoryPlugin />
-        <HorizontalRulePlugin />
-        <LinkPlugin />
-        <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
-        <RichTextPlugin
-          contentEditable={
-            <div className='flex prose w-full max-w-6xl flex-1 flex-col py-4'>
-              <div className='relative h-full px-10' ref={onRef}>
-                <ContentEditable className='editor editor-input focus-visible:outline-none' />
-              </div>
+      <AutoFocusPlugin />
+      <AutoLinkPlugin />
+      <AutoSavePlugin />
+      <CodeHighlightPlugin />
+      <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
+      <HistoryPlugin />
+      <HorizontalRulePlugin />
+      <LinkPlugin />
+      <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
+      <RichTextPlugin
+        contentEditable={
+          <div className='prose flex w-full max-w-6xl flex-1 flex-col py-4'>
+            <div className='relative h-full px-10' ref={onRef}>
+              <ContentEditable className='editor editor-input focus-visible:outline-none' />
             </div>
-          }
-          ErrorBoundary={LexicalErrorBoundary}
-        />
-        <ShortcutsPlugin />
-        <TabIndentationPlugin />
-        <ToolbarPlugin />
-      </ToolbarContext>
+          </div>
+        }
+        ErrorBoundary={LexicalErrorBoundary}
+      />
+      <ShortcutsPlugin />
+      <TabIndentationPlugin />
+      <ToolbarPlugin />
     </LexicalComposer>
   );
 };

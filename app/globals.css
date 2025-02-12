@@ -26,12 +26,12 @@
 
   .editor-code:before {
     content: attr(data-gutter);
-    @apply bg-base-300 absolute top-0 -left-10 border-r border-base-100 text-base-content p-2 text-right rounded-l-sm whitespace-pre-wrap w-10 pt-6 min-h-full;
+    @apply absolute -left-10 top-0 min-h-full w-10 whitespace-pre-wrap rounded-l-sm border-r border-base-100 bg-base-300 p-2 pt-6 text-right text-base-content;
   }
-  
-  .editor-code:after{
+
+  .editor-code:after {
     content: attr(data-language);
-    @apply bg-base-300 absolute top-0 right-0 py-0 px-1 text-xs rounded-bl-sm rounded-tr-sm;
+    @apply absolute right-0 top-0 rounded-bl-sm rounded-tr-sm bg-base-300 px-1 py-0 text-xs;
   }
 }
 

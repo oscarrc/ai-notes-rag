@@ -7,19 +7,14 @@ import {
   KEY_MODIFIER_COMMAND,
   OUTDENT_CONTENT_COMMAND,
 } from 'lexical';
-import { useEffect } from 'react';
 
-import { useToolbarState } from '../context/ToolbarContext';
 import {
-  clearFormatting,
-  formatBulletList,
-  formatCheckList,
-  formatCode,
-  formatHeading,
-  formatNumberedList,
-  formatParagraph,
-  formatQuote,
-} from '../utils/Format';
+  INSERT_CHECK_LIST_COMMAND,
+  INSERT_ORDERED_LIST_COMMAND,
+  INSERT_UNORDERED_LIST_COMMAND,
+} from '@lexical/list';
+
+import { useEffect } from 'react';
 
 import {
   isClearFormatting,
@@ -37,10 +32,17 @@ import {
   isSubscript,
   isSuperscript,
 } from '../utils/Shortcuts';
+
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import {
+  CLEAR_FORMAT_COMMAND,
+  FORMAT_HEADING_COMMAND,
+  FORMAT_PARAGRAPH_COMMAND,
+  INSERT_BLOCKQUOTE_COMMAND,
+  INSERT_CODE_BLOCK_COMMAND,
+} from '../utils/Commands';
 
 const ShortcutsPlugin = () => {
-  const { toolbarState } = useToolbarState();
   const [editor] = useLexicalComposerContext();
 
   useEffect(() => {
@@ -49,27 +51,27 @@ const ShortcutsPlugin = () => {
 
       if (isFormatParagraph(event)) {
         event.preventDefault();
-        formatParagraph(editor);
+        editor.dispatchCommand(FORMAT_PARAGRAPH_COMMAND, undefined);
       } else if (isFormatHeading(event)) {
         event.preventDefault();
         const { code } = event;
         const headingSize = `h${code[code.length - 1]}` as HeadingTagType;
-        formatHeading(editor, toolbarState.blockType, headingSize);
+        editor.dispatchCommand(FORMAT_HEADING_COMMAND, headingSize);
       } else if (isFormatBulletList(event)) {
         event.preventDefault();
-        formatBulletList(editor, toolbarState.blockType);
+        editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
       } else if (isFormatNumberedList(event)) {
         event.preventDefault();
-        formatNumberedList(editor, toolbarState.blockType);
+        editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
       } else if (isFormatCheckList(event)) {
         event.preventDefault();
-        formatCheckList(editor, toolbarState.blockType);
+        editor.dispatchCommand(INSERT_CHECK_LIST_COMMAND, undefined);
       } else if (isFormatCode(event)) {
         event.preventDefault();
-        formatCode(editor, toolbarState.blockType);
+        editor.dispatchCommand(INSERT_CODE_BLOCK_COMMAND, undefined);
       } else if (isFormatQuote(event)) {
         event.preventDefault();
-        formatQuote(editor, toolbarState.blockType);
+        editor.dispatchCommand(INSERT_BLOCKQUOTE_COMMAND, undefined);
       } else if (isStrikeThrough(event)) {
         event.preventDefault();
         editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough');
@@ -90,7 +92,7 @@ const ShortcutsPlugin = () => {
         editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code');
       } else if (isClearFormatting(event)) {
         event.preventDefault();
-        clearFormatting(editor);
+        editor.dispatchCommand(CLEAR_FORMAT_COMMAND, undefined);
       }
 
       return false;
@@ -101,7 +103,7 @@ const ShortcutsPlugin = () => {
       keyboardShortcutsHandler,
       COMMAND_PRIORITY_NORMAL
     );
-  }, [editor, toolbarState.isLink, toolbarState.blockType]);
+  }, [editor]);
 
   return null;
 };

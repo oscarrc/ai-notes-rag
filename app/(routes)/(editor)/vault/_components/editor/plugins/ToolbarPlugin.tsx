@@ -28,35 +28,14 @@ import {
   BsTable,
   BsBook,
   BsMarkdown,
+  BsEraser,
 } from 'react-icons/bs';
 import { $createCodeNode, $isCodeNode } from '@lexical/code';
-import {
-  $createHeadingNode,
-  $createQuoteNode,
-  $isHeadingNode,
-  $isQuoteNode,
-  HeadingTagType,
-} from '@lexical/rich-text';
 
 import {
-  $getNodeByKey,
-  $getSelection,
-  $isElementNode,
   $isRangeSelection,
-  $isRootOrShadowRoot,
-  $setSelection,
-  BaseSelection,
-  CAN_REDO_COMMAND,
-  CAN_UNDO_COMMAND,
-  COMMAND_PRIORITY_CRITICAL,
-  COMMAND_PRIORITY_EDITOR,
-  COMMAND_PRIORITY_NORMAL,
   FORMAT_TEXT_COMMAND,
-  LexicalEditor,
-  NodeKey,
-  RangeSelection,
   REDO_COMMAND,
-  SELECTION_CHANGE_COMMAND,
   TextFormatType,
   UNDO_COMMAND,
 } from 'lexical';
@@ -72,27 +51,23 @@ import {
 } from '@lexical/markdown';
 
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-
 import { $createTextNode, $getRoot } from 'lexical';
-import { $setBlocksType } from '@lexical/selection';
-
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState } from 'react';
 
 import { CUSTOM_TRANSFORMERS } from '../utils/MarkdownTransformers';
 import {
+  CLEAR_FORMAT_COMMAND,
+  FORMAT_PARAGRAPH_COMMAND,
   INSERT_BLOCKQUOTE_COMMAND,
   INSERT_CODE_BLOCK_COMMAND,
 } from '../utils/Commands';
+import useCommandRegistration from '../hooks/useCommandRegistration';
 
 const ToolbarPlugin = () => {
   const [editor] = useLexicalComposerContext();
   const [isEditable, setIsEditable] = useState(() => editor.isEditable());
   const [isRaw, setIsRaw] = useState(false);
-  const [canRedo, setCanRedo] = useState(false);
-  const [canUndo, setCanUndo] = useState(false);
-  const [selection, setSelection] = useState<
-    BaseSelection | RangeSelection | null
-  >(null);
+  const { canRedo, canUndo, selection } = useCommandRegistration(editor);
 
   const toggleEditable = () => {
     editor.setEditable(!isEditable);
@@ -135,70 +110,6 @@ const ToolbarPlugin = () => {
     [selection]
   );
 
-  useEffect(() => {
-    editor.registerCommand(
-      CAN_UNDO_COMMAND,
-      (p) => {
-        return setCanUndo(p), false;
-      },
-      COMMAND_PRIORITY_CRITICAL
-    );
-    editor.registerCommand(
-      CAN_REDO_COMMAND,
-      (p) => {
-        return setCanRedo(p), false;
-      },
-      COMMAND_PRIORITY_CRITICAL
-    );
-
-    editor.registerCommand(
-      SELECTION_CHANGE_COMMAND,
-      () => {
-        setSelection($getSelection());
-        return false;
-      },
-      COMMAND_PRIORITY_EDITOR
-    );
-
-    editor.registerCommand(
-      INSERT_CODE_BLOCK_COMMAND,
-      () => {
-        editor.update(() => {
-          let selection = $getSelection();
-
-          if (selection !== null) {
-            if (selection.isCollapsed()) {
-              $setBlocksType(selection, () => $createCodeNode());
-            } else {
-              const textContent = selection.getTextContent();
-              const codeNode = $createCodeNode();
-              selection.insertNodes([codeNode]);
-              selection = $getSelection();
-              if ($isRangeSelection(selection)) {
-                selection.insertRawText(textContent);
-              }
-            }
-          }
-        });
-
-        return false;
-      },
-      COMMAND_PRIORITY_NORMAL
-    );
-
-    editor.registerCommand(
-      INSERT_BLOCKQUOTE_COMMAND,
-      () => {
-        editor.update(() => {
-          const selection = $getSelection();
-          $setBlocksType(selection, () => $createQuoteNode());
-        });
-        return false;
-      },
-      COMMAND_PRIORITY_NORMAL
-    );
-  }, [editor]);
-
   return (
     <nav className='sticky bottom-0 flex w-full flex-row p-4'>
       <div className='flex flex-1 items-center justify-start gap-2 rounded bg-base-200 px-4 py-2'>
@@ -221,7 +132,12 @@ const ToolbarPlugin = () => {
           <BsArrow90DegRight className='h-4 w-4' />
         </button>
         <span className='divider divider-horizontal m-0' />
-        <button className='btn btn-square btn-ghost join-item btn-xs'>
+        <button
+          className={`btn btn-square btn-xs ${selectionFormat('bold') ? 'btn-primary' : 'btn-ghost'}`}
+          onClick={() =>
+            editor.dispatchCommand(FORMAT_PARAGRAPH_COMMAND, undefined)
+          }
+        >
           <BsParagraph className='h-4 w-4' />
         </button>
         <span className='divider divider-horizontal m-0' />
@@ -325,9 +241,17 @@ const ToolbarPlugin = () => {
         <button className='btn btn-square btn-ghost btn-xs'>
           <BsTable className='h-4 w-4' /> {/* TODO INSERT TABLE */}
         </button>
-        <span className='divider divider-horizontal m-0' />
         <button className='btn btn-square btn-ghost btn-xs'>
           <BsCardImage className='h-4 w-4' /> {/* TODO INSERT IMAGE */}
+        </button>
+        <span className='divider divider-horizontal m-0' />
+        <button
+          className='btn btn-square btn-ghost btn-xs'
+          onClick={() =>
+            editor.dispatchCommand(CLEAR_FORMAT_COMMAND, undefined)
+          }
+        >
+          <BsEraser className='h-4 w-4' /> {/* TODO INSERT IMAGE */}
         </button>
       </div>
       <div className='flex items-center justify-start gap-2 rounded bg-base-200 px-4 py-2'>

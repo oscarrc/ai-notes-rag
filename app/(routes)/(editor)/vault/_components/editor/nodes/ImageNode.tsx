@@ -3,16 +3,14 @@ import type {
   DOMConversionOutput,
   DOMExportOutput,
   EditorConfig,
-  LexicalEditor,
   LexicalNode,
   LexicalUpdateJSON,
   NodeKey,
-  SerializedEditor,
   SerializedLexicalNode,
   Spread,
 } from 'lexical';
 
-import { $applyNodeReplacement, createEditor, DecoratorNode } from 'lexical';
+import { $applyNodeReplacement, DecoratorNode } from 'lexical';
 import Image from 'next/image';
 import { JSX } from 'react';
 

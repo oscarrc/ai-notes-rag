@@ -6,7 +6,8 @@ export default {
   tableCellActionButton: 'btn btn-xs btn-ghost',
   tableCellActionButtonContainer: 'absolute right-1 top-1',
   tableCellHeader: 'bg-base-200 font-bold',
-  tableCellResizer: 'absolute right-0 top-0 h-full w-1 bg-primary cursor-col-resize',
+  tableCellResizer:
+    'absolute right-0 top-0 h-full w-1 bg-primary cursor-col-resize',
   tableCellSelected: 'bg-primary/20',
   tableRowStriping: 'even:bg-base-200',
   tableScrollableWrapper: 'overflow-x-auto',

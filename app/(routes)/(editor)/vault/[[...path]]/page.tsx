@@ -4,7 +4,7 @@ import MarkdownEditor from '@/app/(routes)/(editor)/vault/_components/editor';
 const Editor = () => {
   return (
     <section className='relative flex flex-1 flex-col items-center gap-4'>
-      <aside className='sticky top-0 w-full p-4'>
+      <aside className='sticky top-0 z-10 w-full p-4'>
         <Breadcrumbs />
       </aside>
       <MarkdownEditor />
