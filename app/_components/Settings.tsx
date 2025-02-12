@@ -24,14 +24,9 @@ const Settings = () => {
                 <span className='label-text'>Select inference model</span>
               </div>
               <select className='select select-bordered select-sm'>
-                <option disabled selected>
+                <option disabled>
                   Pick one
                 </option>
-                <option>Star Wars</option>
-                <option>Harry Potter</option>
-                <option>Lord of the Rings</option>
-                <option>Planet of the Apes</option>
-                <option>Star Trek</option>
               </select>
             </label>
             <label className='form-control w-full max-w-lg'>
@@ -39,14 +34,9 @@ const Settings = () => {
                 <span className='label-text'>Select embeddings model</span>
               </div>
               <select className='select select-bordered select-sm'>
-                <option disabled selected>
+                <option disabled>
                   Pick one
                 </option>
-                <option>Star Wars</option>
-                <option>Harry Potter</option>
-                <option>Lord of the Rings</option>
-                <option>Planet of the Apes</option>
-                <option>Star Trek</option>
               </select>
             </label>
             <div className='flex w-full max-w-lg justify-between'>
