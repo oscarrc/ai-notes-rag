@@ -12,7 +12,7 @@ const Editor = () => {
   const filePath = decodeURI(pathname.replace(vault, ''));
   const { getFile, updateFile, file } = useFilesQuery();
   const { data } = getFile(filePath);
-
+  
   const handleUpdate = useCallback(async (newContent: string) => {
     const currentFile = await file(filePath) as FileNode;
     if(!currentFile) return;

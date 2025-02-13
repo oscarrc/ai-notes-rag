@@ -3,6 +3,8 @@ import { useEffect } from 'react';
 import { removeFile, insertFile, replaceFile } from '../_utils/files';
 import useNavigationStore from '../_store/navigationStore';
 
+const vault = process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
+
 export const useFilesQuery = () => {
   const queryClient = useQueryClient();
   const { addTab } = useNavigationStore();
@@ -90,6 +92,7 @@ export const useFilesQuery = () => {
       queryClient.setQueryData(['files'], (files: FileNode[]) =>
         replaceFile(files, file, updatedFile)
       );
+      queryClient.setQueryData(['files', file.path.replace(vault, '')], updatedFile)
     },
   });
 
