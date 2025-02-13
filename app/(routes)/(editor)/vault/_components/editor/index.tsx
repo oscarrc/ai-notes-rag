@@ -21,6 +21,7 @@ import DraggableBlockPlugin from './plugins/DraggableBlockPlugin';
 import AutoSavePlugin from './plugins/AutoSavePlugin';
 import LinkPlugin from './plugins/LinkPlugin';
 import AutoLinkPlugin from './plugins/AutoLinkPlugin';
+import LoadMarkdownPlugin from './plugins/LoadMarkdownPlugin';
 
 // Import all necessary nodes
 import { HeadingNode, QuoteNode } from '@lexical/rich-text';
@@ -67,7 +68,12 @@ const editorConfig: EditorConfig = {
   ],
 };
 
-const MarkdownEditor = () => {
+interface MarkdownEditorProps {
+  content: string,
+  onChange?: (...a: any) => void
+}
+
+const MarkdownEditor = ({ content, onChange }: MarkdownEditorProps) => {
   const [floatingAnchorElem, setFloatingAnchorElem] = useState<
     HTMLElement | undefined
   >();
@@ -82,12 +88,13 @@ const MarkdownEditor = () => {
     <LexicalComposer initialConfig={editorConfig}>
       <AutoFocusPlugin />
       <AutoLinkPlugin />
-      <AutoSavePlugin />
+      <AutoSavePlugin onSave={onChange} transformers={CUSTOM_TRANSFORMERS} />
       <CodeHighlightPlugin />
       <DraggableBlockPlugin anchorElem={floatingAnchorElem} />
       <HistoryPlugin />
       <HorizontalRulePlugin />
       <LinkPlugin />
+      <LoadMarkdownPlugin content={content} transformers={CUSTOM_TRANSFORMERS} />
       <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
       <RichTextPlugin
         contentEditable={
