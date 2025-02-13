@@ -11,6 +11,7 @@
     "format:fix": "prettier --write --ignore-path .gitignore ."
   },
   "dependencies": {
+    "@lancedb/lancedb": "^0.16.0",
     "@lexical/markdown": "^0.24.0",
     "@lexical/react": "^0.24.0",
     "@tanstack/react-query": "^5.66.0",
