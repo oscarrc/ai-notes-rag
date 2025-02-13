@@ -3,8 +3,6 @@ import { getFile, updateFile, deleteFile } from '../helper';
 import path from 'path';
 
 const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
-const VAULT_PATH = process.env.NEXT_PUBLIC_VAULT_PATH || 'vault';
-const BASE_PATH = `/${DATA_PATH}/${VAULT_PATH}/`.replace('//', '');
 
 export async function GET(
   req: Request,
@@ -15,10 +13,8 @@ export async function GET(
   if (!filePath)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
-  const fullPath = path.join(BASE_PATH, ...filePath);
-
   try {
-    const fileNode = getFile(fullPath);
+    const fileNode = getFile(filePath);
     if (!fileNode)
       return NextResponse.json({ error: 'File not found' }, { status: 404 });
 
@@ -38,14 +34,16 @@ export async function PUT(
 ) {
   const { path: filePath } = await params;
 
-  if (!filePath)
+  if (!filePath)    
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
-  const fullPath = path.join(DATA_PATH, ...filePath);
   const fileNode: FileNode = await req.json();
 
+  if(!fileNode)    
+    return NextResponse.json({ error: 'File is required' }, { status: 400 });
+
   try {
-    const updatedFile = updateFile(fullPath, fileNode);
+    const updatedFile = updateFile(filePath, fileNode);
     return NextResponse.json(updatedFile);
   } catch (error) {
     console.error(error);

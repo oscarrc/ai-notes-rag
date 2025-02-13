@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
-const vault = process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
-const data = process.env.NEXT_PUBLIC_DATA_PATH || '/data';
+const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
+const VAULT_PATH = process.env.NEXT_PUBLIC_VAULT_PATH || 'vault';
+const BASE_PATH = `/${DATA_PATH}/${VAULT_PATH}/`.replace('//', '');
 
 export const fetchFiles = (dir: string, relativePath = ''): FileNode[] => {
   const results: FileNode[] = [];
@@ -16,14 +17,14 @@ export const fetchFiles = (dir: string, relativePath = ''): FileNode[] => {
     if (entry.isDirectory()) {
       results.push({
         name: entry.name,
-        path: `${vault}/${relativeEntryPath}`,
+        path: `${VAULT_PATH}/${relativeEntryPath}`,
         children: fetchFiles(fullPath, relativeEntryPath),
       });
     } else {
       const ext = path.extname(entry.name);
       results.push({
         name: path.basename(entry.name, ext),
-        path: `${vault}/${relativeEntryPath}`,
+        path: `${VAULT_PATH}/${relativeEntryPath}`,
         extension: ext,
       });
     }
@@ -83,26 +84,28 @@ export const createFile = (baseDir: string, item: FileNode): FileNode => {
   }
 };
 
-export const getFile = (filePath: string): FileNode | null => {
-  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory())
+export const getFile = (filePath: string[]): FileNode | null => {  
+  const fullPath = path.join(BASE_PATH, ...filePath);
+
+  if (!fs.existsSync(fullPath) || fs.statSync(fullPath).isDirectory())
     return null;
 
-  const name = path.basename(filePath, path.extname(filePath));
-  const extension = path.extname(filePath);
-  const content = fs.readFileSync(filePath, 'utf-8');
+  const name = path.basename(fullPath, path.extname(fullPath));
+  const extension = path.extname(fullPath);
+  const content = fs.readFileSync(fullPath, 'utf-8');
 
-  return { name, path: filePath, extension, content };
+  return { name, path: path.join(VAULT_PATH, ...filePath), extension, content };
 };
 
 export const updateFile = (
-  filePath: string,
+  filePath: string[],
   fileNode: FileNode
 ): FileNode | null => {
-  const absolutePath = path.join(process.cwd(), filePath);
-  if (!fs.existsSync(absolutePath)) return null;
+  const absolutePath = path.join(process.cwd(), DATA_PATH, ...filePath);
+  if (!fs.existsSync(absolutePath)) throw new Error("File not found");
 
   const isFile = !!fileNode.extension;
-  const newPath = path.join(process.cwd(), data, fileNode.path);
+  const newPath = path.join(process.cwd(), DATA_PATH, fileNode.path);
 
   if (newPath && newPath !== absolutePath) {
     fs.renameSync(absolutePath, newPath);
@@ -112,7 +115,7 @@ export const updateFile = (
     fs.writeFileSync(newPath, fileNode.content, 'utf-8');
   }
 
-  return { ...fileNode, path: newPath };
+  return { ...fileNode, path: fileNode.path };
 };
 
 export const deleteFile = (filePath: string): void => {

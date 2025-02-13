@@ -21,7 +21,7 @@ const SidebarFileTree = ({ files }: SidebarFileTreeProps) => {
 
     selectNode(node); // Ensure folders are marked as selected
 
-    if (node.children) {
+    if (node?.children) {
       // If it's a folder, toggle its open state instead of treating it like a file
       setOpenFolders((prev) => ({
         ...prev,
@@ -37,7 +37,7 @@ const SidebarFileTree = ({ files }: SidebarFileTreeProps) => {
 
   const renderTree = (nodes: FileNode[]) => {
     return nodes?.map((node, index) => {
-      if (node.children) {
+      if (node?.children) {
         const isOpen = openFolders[node.path];
         return (
           <li key={index}>
@@ -52,7 +52,7 @@ const SidebarFileTree = ({ files }: SidebarFileTreeProps) => {
               )}
               {node.name}
             </button>
-            {isOpen && <ul>{renderTree(node.children)}</ul>}
+            {isOpen && <ul>{renderTree(node?.children)}</ul>}
           </li>
         );
       } else {
