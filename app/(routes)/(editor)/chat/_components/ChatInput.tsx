@@ -17,7 +17,7 @@ const ChatInput = () => {
       <textarea
         placeholder='Send a message'
         autoFocus
-        className='h-24 flex-1 bg-transparent focus-visible:outline-none'
+        className='h-24 flex-1 bg-transparent focus-visible:outline-none resize-none'
       />
       <ButtonSquare size='md' className='btn-neutral self-end'>
         <VscSend className='h-6 w-6' />

@@ -111,8 +111,8 @@ const ToolbarPlugin = () => {
   );
 
   return (
-    <nav className='sticky bottom-0 flex w-full flex-row p-4'>
-      <div className='flex flex-1 items-center justify-start gap-2 rounded bg-base-200 px-4 py-2'>
+    <nav className='sticky rounded bottom-0 flex w-full flex-row p-4'>
+      <div className='flex flex-1 items-center justify-start gap-2 bg-base-200 px-4 py-2'>
         <button
           className='btn btn-square btn-ghost btn-xs'
           disabled={!canUndo}
@@ -254,7 +254,7 @@ const ToolbarPlugin = () => {
           <BsEraser className='h-4 w-4' /> {/* TODO INSERT IMAGE */}
         </button>
       </div>
-      <div className='flex items-center justify-start gap-2 rounded bg-base-200 px-4 py-2'>
+      <div className='flex items-center justify-start gap-2 bg-base-200 px-4 py-2'>
         <button
           className={`btn btn-square btn-ghost swap btn-xs ${isEditable ? 'swap-active' : ''}`}
           onClick={toggleEditable}
