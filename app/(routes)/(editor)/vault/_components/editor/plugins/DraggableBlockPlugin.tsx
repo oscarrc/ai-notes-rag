@@ -1,3 +1,5 @@
+'use client'
+
 import { DraggableBlockPlugin_EXPERIMENTAL } from '@lexical/react/LexicalDraggableBlockPlugin';
 import { RefObject, useRef } from 'react';
 import { VscGripper } from 'react-icons/vsc';

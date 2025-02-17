@@ -24,9 +24,7 @@ const Settings = () => {
                 <span className='label-text'>Select inference model</span>
               </div>
               <select className='select select-bordered select-sm'>
-                <option disabled>
-                  Pick one
-                </option>
+                <option disabled>Pick one</option>
               </select>
             </label>
             <label className='form-control w-full max-w-lg'>
@@ -34,9 +32,7 @@ const Settings = () => {
                 <span className='label-text'>Select embeddings model</span>
               </div>
               <select className='select select-bordered select-sm'>
-                <option disabled>
-                  Pick one
-                </option>
+                <option disabled>Pick one</option>
               </select>
             </label>
             <div className='flex w-full max-w-lg justify-between'>

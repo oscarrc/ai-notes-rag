@@ -34,12 +34,12 @@ export async function PUT(
 ) {
   const { path: filePath } = await params;
 
-  if (!filePath)    
+  if (!filePath)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
   const fileNode: FileNode = await req.json();
 
-  if(!fileNode)    
+  if (!fileNode)
     return NextResponse.json({ error: 'File is required' }, { status: 400 });
 
   try {

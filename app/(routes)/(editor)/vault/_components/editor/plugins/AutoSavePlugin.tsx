@@ -4,7 +4,7 @@ import { $convertToMarkdownString, Transformer } from '@lexical/markdown';
 import { useCallback, useRef } from 'react';
 
 interface AutoSavePluginProps {
-  transformers: Transformer[];  
+  transformers: Transformer[];
   onSave?: (...a: any) => void;
 }
 

@@ -11,9 +11,15 @@ const ChatAnswer = ({ text }: ChatAnswerProps) => {
       <div className='flex flex-col gap-4 rounded-box p-4'>
         <div className='prose'>{text}</div>
         <div className='flex flex-1 justify-end gap-2'>
-           <div className="badge badge-md badge-outline badge-neutral">Source 1</div>
-          <div className="badge badge-md badge-outline badge-neutral">Source 2</div>
-          <div className="badge badge-md badge-outline badge-neutral">Source 3</div>
+          <div className='badge badge-neutral badge-outline badge-md'>
+            Source 1
+          </div>
+          <div className='badge badge-neutral badge-outline badge-md'>
+            Source 2
+          </div>
+          <div className='badge badge-neutral badge-outline badge-md'>
+            Source 3
+          </div>
         </div>
       </div>
       <div className='flex w-full gap-2'>

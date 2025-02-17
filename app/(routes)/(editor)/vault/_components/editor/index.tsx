@@ -69,8 +69,8 @@ const editorConfig: EditorConfig = {
 };
 
 interface MarkdownEditorProps {
-  content: string,
-  onChange?: (...a: any) => void
+  content: string;
+  onChange?: (...a: any) => void;
 }
 
 const MarkdownEditor = ({ content, onChange }: MarkdownEditorProps) => {
@@ -94,7 +94,10 @@ const MarkdownEditor = ({ content, onChange }: MarkdownEditorProps) => {
       <HistoryPlugin />
       <HorizontalRulePlugin />
       <LinkPlugin />
-      <LoadMarkdownPlugin content={content} transformers={CUSTOM_TRANSFORMERS} />
+      <LoadMarkdownPlugin
+        content={content}
+        transformers={CUSTOM_TRANSFORMERS}
+      />
       <MarkdownShortcutPlugin transformers={CUSTOM_TRANSFORMERS} />
       <RichTextPlugin
         contentEditable={
