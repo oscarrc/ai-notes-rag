@@ -23,7 +23,7 @@ const progressCallback: ProgressCallback = (progress: any) => {
 const getInstance = () => {
   return pipeline(task, model, {
     //@ts-ignore
-    device: !!navigator.gpu ? "webgpu" : "wasm",
+    device: !!navigator.gpu ? 'webgpu' : 'wasm',
     progress_callback: progressCallback,
   }) as Promise<FeatureExtractionPipeline>;
 };
@@ -59,7 +59,10 @@ self.addEventListener('message', async (event) => {
       }
 
       if (!extractor) {
-        self.postMessage({ status: 'error', message: 'Failed to initialize model' });
+        self.postMessage({
+          status: 'error',
+          message: 'Failed to initialize model',
+        });
         return;
       }
 

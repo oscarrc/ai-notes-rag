@@ -13,18 +13,15 @@ const Editor = () => {
   const filePath = decodeURI(pathname.replace(vault, ''));
   const { getFile, updateFile, file } = useFilesQuery();
   const { data } = getFile(filePath);
-  const { getEmbeddings, ready } = useEmbeddings();
+  const { getEmbeddings } = useEmbeddings();
 
-  useEffect(() => {
-    console.log(ready);
-    getEmbeddings('Hello world');
-  }, [ready])
-  
   const handleUpdate = useCallback(
-    async (newContent: string) => {
+    async (markdown: string, text: string) => {
       const currentFile = (await file(filePath)) as FileNode;
       if (!currentFile) return;
-      updateFile({ ...currentFile, content: newContent });
+
+      updateFile({ ...currentFile, content: markdown });
+      getEmbeddings(text)
     },
     [file, updateFile]
   );

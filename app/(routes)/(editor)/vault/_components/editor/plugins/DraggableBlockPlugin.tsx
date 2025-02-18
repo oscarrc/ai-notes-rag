@@ -1,4 +1,4 @@
-'use client'
+'use client';
 
 import { DraggableBlockPlugin_EXPERIMENTAL } from '@lexical/react/LexicalDraggableBlockPlugin';
 import { RefObject, useRef } from 'react';
@@ -11,7 +11,7 @@ function isOnMenu(element: HTMLElement): boolean {
 }
 
 const DraggableBlockPlugin = ({
-  anchorElem = document.body,
+  anchorElem = document?.body,
 }: {
   anchorElem?: HTMLElement;
 }) => {
