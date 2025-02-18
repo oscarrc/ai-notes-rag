@@ -1,10 +1,19 @@
 'use client';
 
-import { useRef } from 'react';
+import { ChangeEvent, useRef } from 'react';
 import { VscClose } from 'react-icons/vsc';
+import { EmbeddingsModels } from '../_providers/EmbeddingsProvider';
+import { useEmbeddings } from '../_hooks/useEmbeddings';
 
 const Settings = () => {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const { model, setModel } = useEmbeddings();
+
+  const handleEmbeddingsModel = (e:ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    if(!EmbeddingsModels.includes(value)) return;
+    else setModel(value);
+  }
 
   return (
     <dialog id='settings' className='modal' ref={dialogRef}>
@@ -31,8 +40,11 @@ const Settings = () => {
               <div className='label'>
                 <span className='label-text'>Select embeddings model</span>
               </div>
-              <select className='select select-bordered select-sm'>
-                <option disabled>Pick one</option>
+              <select value={model} onChange={handleEmbeddingsModel} className='select select-bordered select-sm'>
+                {
+                  EmbeddingsModels.map(m => <option key={m}>{m}</option>)
+                }
+                
               </select>
             </label>
             <div className='flex w-full max-w-lg justify-between'>

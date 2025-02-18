@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import '@/app/globals.css';
 import QueryProvider from '@/app/_providers/QueryProvider';
-import PwaProvider from '@/app/_providers/PwaProvider';
+import { EmbeddingsProvider } from '../_providers/EmbeddingsProvider';
 
 export const metadata: Metadata = {
   title: 'AI Notes',
@@ -12,9 +12,9 @@ const RootLayout = ({ children }: LayoutProps) => {
   return (
     <html lang='en'>
       <body>
-        <PwaProvider>
+        <EmbeddingsProvider>
           <QueryProvider>{children}</QueryProvider>
-        </PwaProvider>
+        </EmbeddingsProvider>
       </body>
     </html>
   );

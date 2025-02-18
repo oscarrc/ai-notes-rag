@@ -4,8 +4,8 @@ import Breadcrumbs from '@/app/_components/Breadcrumbs';
 import MarkdownEditor from '@/app/(routes)/(editor)/vault/_components/editor';
 import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
 import { usePathname } from 'next/navigation';
-import { useCallback, useEffect } from 'react';
-import useEmbeddings from '@/app/_hooks/useEmbeddings';
+import { useCallback } from 'react';
+import { useEmbeddings } from '@/app/_hooks/useEmbeddings';
 
 const Editor = () => {
   const pathname = usePathname();
@@ -13,7 +13,7 @@ const Editor = () => {
   const filePath = decodeURI(pathname.replace(vault, ''));
   const { getFile, updateFile, file } = useFilesQuery();
   const { data } = getFile(filePath);
-  const { getEmbeddings } = useEmbeddings();
+  const { calculateEmbeddings } = useEmbeddings();
 
   const handleUpdate = useCallback(
     async (markdown: string, text: string) => {
@@ -21,7 +21,8 @@ const Editor = () => {
       if (!currentFile) return;
 
       updateFile({ ...currentFile, content: markdown });
-      getEmbeddings(text)
+      const test = await calculateEmbeddings(text);
+      console.log(test)
     },
     [file, updateFile]
   );
