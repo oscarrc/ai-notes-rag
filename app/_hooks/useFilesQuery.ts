@@ -74,7 +74,7 @@ export const useFilesQuery = () => {
     });
 
     return result;
-  }
+  };
 
   const createMutation = useMutation({
     mutationFn: (file: FileNode) => createFile(file),
@@ -92,7 +92,10 @@ export const useFilesQuery = () => {
       queryClient.setQueryData(['files'], (files: FileNode[]) =>
         replaceFile(files, file, updatedFile)
       );
-      queryClient.setQueryData(['files', file.path.replace(vault, '')], updatedFile)
+      queryClient.setQueryData(
+        ['files', file.path.replace(vault, '')],
+        updatedFile
+      );
     },
   });
 
@@ -105,10 +108,11 @@ export const useFilesQuery = () => {
     },
   });
 
-  const getCurrentFile = (path: string) => queryClient.ensureQueryData({
-    queryKey: ['files', path],
-    queryFn: () => getFile(path)
-  })
+  const getCurrentFile = (path: string) =>
+    queryClient.ensureQueryData({
+      queryKey: ['files', path],
+      queryFn: () => getFile(path),
+    });
 
   useEffect(() => {
     queryClient.prefetchQuery({

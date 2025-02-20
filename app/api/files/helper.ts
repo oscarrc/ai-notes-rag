@@ -84,7 +84,7 @@ export const createFile = (baseDir: string, item: FileNode): FileNode => {
   }
 };
 
-export const getFile = (filePath: string[]): FileNode | null => {  
+export const getFile = (filePath: string[]): FileNode | null => {
   const fullPath = path.join(BASE_PATH, ...filePath);
 
   if (!fs.existsSync(fullPath) || fs.statSync(fullPath).isDirectory())
@@ -102,7 +102,7 @@ export const updateFile = (
   fileNode: FileNode
 ): FileNode | null => {
   const absolutePath = path.join(process.cwd(), DATA_PATH, ...filePath);
-  if (!fs.existsSync(absolutePath)) throw new Error("File not found");
+  if (!fs.existsSync(absolutePath)) throw new Error('File not found');
 
   const isFile = !!fileNode.extension;
   const newPath = path.join(process.cwd(), DATA_PATH, fileNode.path);

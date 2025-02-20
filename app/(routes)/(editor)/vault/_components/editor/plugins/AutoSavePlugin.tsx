@@ -1,18 +1,18 @@
-import { EditorState } from 'lexical';
+import { EditorState, $getRoot } from 'lexical';
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { $convertToMarkdownString, Transformer } from '@lexical/markdown';
 import { useCallback, useRef } from 'react';
 
 interface AutoSavePluginProps {
-  transformers: Transformer[];  
+  transformers: Transformer[];
   onSave?: (...a: any) => void;
 }
 
 const AutoSavePlugin = ({ onSave, transformers }: AutoSavePluginProps) => {
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const saveMarkdown = async (markdown: string) => {
-    onSave && onSave(markdown);
+  const handleSave = async (markdown: string, text: string) => {
+    onSave && onSave(markdown, text);
   };
 
   const onChange = useCallback((editorState: EditorState) => {
@@ -25,7 +25,9 @@ const AutoSavePlugin = ({ onSave, transformers }: AutoSavePluginProps) => {
           /\n\n\n \n\n\n/gm,
           '\n\n \n\n'
         );
-        saveMarkdown(markdown);
+
+        const text = $getRoot().getTextContent();
+        handleSave(markdown, text);
       });
     }, 500);
   }, []);
