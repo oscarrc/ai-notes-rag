@@ -32,3 +32,18 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to connectDB' }, { status: 500 });
   }
 }
+
+export async function PUT(req: Request) {
+  const data = await req.json();
+
+  try {
+    const db = await connectDB();
+    const table = await getTable(db, 'embeddings');
+    const results = await table.search(data).distanceType("cosine").limit(10).toArray()
+
+    return NextResponse.json(results);
+  } catch (error) {
+    console.log(error);
+    return NextResponse.json({ error: 'Failed to connectDB' }, { status: 500 });
+  }
+}

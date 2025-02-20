@@ -13,16 +13,18 @@ const Editor = () => {
   const filePath = decodeURI(pathname.replace(vault, ''));
   const { getFile, updateFile, file } = useFilesQuery();
   const { data } = getFile(filePath);
-  const { calculateEmbeddings } = useEmbeddings();
+  const { calculateEmbeddings, saveEmbeddings } = useEmbeddings();
 
   const handleUpdate = useCallback(
     async (markdown: string, text: string) => {
       const currentFile = (await file(filePath)) as FileNode;
       if (!currentFile) return;
+      
+      const { name, path } = currentFile
+      const embbeddings = await calculateEmbeddings(text);
 
       updateFile({ ...currentFile, content: markdown });
-      const test = await calculateEmbeddings(text, filePath);
-      console.log(test)
+      saveEmbeddings({ name, path, text, vector: embbeddings });
     },
     [file, updateFile]
   );

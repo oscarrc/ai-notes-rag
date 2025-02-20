@@ -20,8 +20,9 @@ interface WorkerState {
 type Embedding = Float32Array | number[];
 
 interface EmbeddingRecord {
+  name: string;
   path: string;
-  chunk: string;
+  text: string;
   vector: Embedding
 }
 

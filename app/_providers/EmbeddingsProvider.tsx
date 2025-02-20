@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useRef } from 'react';
+import { createContext, useEffect, useState, useRef } from 'react';
 import {
     env,
     FeatureExtractionPipeline,
@@ -23,7 +23,7 @@ export const EmbeddingsProvider = ({ children }: { children: React.ReactNode }) 
 
     const extractor  = useRef<FeatureExtractionPipeline | null>(null);
 
-    const saveEmbedding = async ( data: EmbeddingRecord ) => {
+    const saveEmbeddings = async ( data: EmbeddingRecord ) => {
       await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}api/embeddings`, {
         method: 'POST',
         body: JSON.stringify(data),
@@ -40,29 +40,32 @@ export const EmbeddingsProvider = ({ children }: { children: React.ReactNode }) 
         extractor.current = e;
     }
 
-    const calculateEmbeddings = async (input: string, path: string) => {
+    const calculateEmbeddings = async (input: string) => {
         if(!extractor.current) return;
 
         const output = await extractor.current(input, {
-            pooling: 'mean',
-            normalize: true,
+          pooling: 'mean',
+          normalize: true,
         });
-
-        await saveEmbedding({
-          path,
-          chunk: input,
-          vector: Array.from(output.data)
-        })
 
         return Array.from(output.data)
     }
+
+    const getQuery = async (data: Embedding) => {
+      const result = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}api/embeddings`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      const files = await result.json();
+      return files;
+    };    
     
     useEffect(() => {
         initPipeline()
     }, [model])
 
   return (
-    <EmbeddingsContext.Provider value={{ calculateEmbeddings, progress, model, setModel }}>
+    <EmbeddingsContext.Provider value={{ calculateEmbeddings, saveEmbeddings, getQuery, progress, model, setModel }}>
       {children}
     </EmbeddingsContext.Provider>
   );

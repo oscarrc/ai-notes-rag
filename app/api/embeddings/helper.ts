@@ -14,8 +14,9 @@ const DB = process.env.NEXT_NEXT_PUBLIC_DB_PATH || '/database';
 const EMBEDDING_DIMENSION = 384;
 
 const embeddingsSchema = new Schema([
+  new Field('name', new Utf8()),
   new Field('path', new Utf8()),
-  new Field('chunk', new Utf8()),
+  new Field('text', new Utf8()),
   new Field(
     'vector',
     new FixedSizeList(
