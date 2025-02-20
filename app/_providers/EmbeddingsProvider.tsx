@@ -23,6 +23,13 @@ export const EmbeddingsProvider = ({ children }: { children: React.ReactNode }) 
 
     const extractor  = useRef<FeatureExtractionPipeline | null>(null);
 
+    const saveEmbedding = async ( data: EmbeddingRecord ) => {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}api/embeddings`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });  
+    }
+
     const initPipeline = async () => {
         const e = await pipeline(task, model, {
             //@ts-ignore
@@ -33,13 +40,19 @@ export const EmbeddingsProvider = ({ children }: { children: React.ReactNode }) 
         extractor.current = e;
     }
 
-    const calculateEmbeddings = async (input: string) => {
+    const calculateEmbeddings = async (input: string, path: string) => {
         if(!extractor.current) return;
 
         const output = await extractor.current(input, {
             pooling: 'mean',
             normalize: true,
         });
+
+        await saveEmbedding({
+          path,
+          chunk: input,
+          vector: Array.from(output.data)
+        })
 
         return Array.from(output.data)
     }

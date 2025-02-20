@@ -21,7 +21,7 @@ const Editor = () => {
       if (!currentFile) return;
 
       updateFile({ ...currentFile, content: markdown });
-      const test = await calculateEmbeddings(text);
+      const test = await calculateEmbeddings(text, filePath);
       console.log(test)
     },
     [file, updateFile]

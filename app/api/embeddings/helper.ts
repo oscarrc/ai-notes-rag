@@ -4,24 +4,23 @@ import {
   Field,
   FixedSizeList,
   Int32,
-  Float16,
+  Float32,
   Utf8,
 } from 'apache-arrow';
 import path from 'path';
 
 const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
 const DB = process.env.NEXT_NEXT_PUBLIC_DB_PATH || '/database';
-const EMBEDDING_DIMENSION = 16;
+const EMBEDDING_DIMENSION = 384;
 
 const embeddingsSchema = new Schema([
-  new Field('id', new Int32()),
   new Field('path', new Utf8()),
   new Field('chunk', new Utf8()),
   new Field(
     'vector',
     new FixedSizeList(
       EMBEDDING_DIMENSION,
-      new Field('item', new Float16(), true)
+      new Field('item', new Float32(), true)
     ),
     false
   ),

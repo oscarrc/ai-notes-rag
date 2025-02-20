@@ -19,6 +19,12 @@ interface WorkerState {
 
 type Embedding = Float32Array | number[];
 
+interface EmbeddingRecord {
+  path: string;
+  chunk: string;
+  vector: Embedding
+}
+
 enum FileType {
   FILE = 'file',
   DIR = 'dir',
