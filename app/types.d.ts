@@ -22,7 +22,7 @@ type Embedding = Float32Array | number[];
 interface EmbeddingRecord {
   name: string;
   path: string;
-  text: string;
+  content: string;
   vector: Embedding
 }
 

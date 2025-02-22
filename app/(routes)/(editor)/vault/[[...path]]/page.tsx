@@ -24,7 +24,7 @@ const Editor = () => {
       const embbeddings = await calculateEmbeddings(text);
 
       updateFile({ ...currentFile, content: markdown });
-      saveEmbeddings({ name, path, text, vector: embbeddings });
+      saveEmbeddings({ name, path, content:text, vector: embbeddings });
     },
     [file, updateFile]
   );

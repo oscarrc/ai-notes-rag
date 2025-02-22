@@ -16,7 +16,7 @@ const EMBEDDING_DIMENSION = 384;
 const embeddingsSchema = new Schema([
   new Field('name', new Utf8()),
   new Field('path', new Utf8()),
-  new Field('text', new Utf8()),
+  new Field('content', new Utf8()),
   new Field(
     'vector',
     new FixedSizeList(
