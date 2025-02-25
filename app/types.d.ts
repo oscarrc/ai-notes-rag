@@ -26,6 +26,11 @@ interface EmbeddingRecord {
   vector: Embedding
 }
 
+interface HistoryMessage {
+  role: 'user' | 'assistant' | 'system' | 'context';
+  content: string;
+}
+
 enum FileType {
   FILE = 'file',
   DIR = 'dir',

@@ -11,7 +11,7 @@ const circularProgress = ({ value, size, thickness, className }: circularProgres
     const style = {
         '--value': Math.round(value), 
         '--size': size || '2rem', 
-        '--thickness': thickness || '0.25rem'
+        '--thickness': thickness || '0.5rem'
     } as React.CSSProperties
 
     return (
