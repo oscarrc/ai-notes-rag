@@ -1,12 +1,15 @@
 'use client';
 
+import { FormEvent, useState } from 'react';
+
 import ButtonSquare from '@/app/_components/ButtonSquare';
-import { FormEvent } from 'react';
 import { VscSend } from 'react-icons/vsc';
 
-const ChatInput = () => {
+const ChatInput = ({ onSubmit }: { onSubmit: (m: string) => void }) => {
+  const [value, setValue] = useState('');
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    onSubmit(value);
   };
 
   return (
@@ -17,7 +20,9 @@ const ChatInput = () => {
       <textarea
         placeholder='Send a message'
         autoFocus
-        className='h-24 flex-1 bg-transparent focus-visible:outline-none resize-none'
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className='h-24 flex-1 resize-none bg-transparent focus-visible:outline-none'
       />
       <ButtonSquare size='md' className='btn-neutral self-end'>
         <VscSend className='h-6 w-6' />

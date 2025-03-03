@@ -8,9 +8,9 @@ import {
     PipelineType,
   } from '@huggingface/transformers';
   
-  env.allowRemoteModels = true;
-  env.remoteHost = '/api/models/embeddings';
-  env.remotePathTemplate = '{model}';
+env.allowRemoteModels = true;
+env.remoteHost = '/api/models';
+env.remotePathTemplate = '{model}';
   
 export const EmbeddingsContext = createContext<any>(null);
 
@@ -18,8 +18,9 @@ export const EmbeddingsModels = ['all-MiniLM-L6-v2'];
 
 export const EmbeddingsProvider = ({ children }: { children: React.ReactNode }) => {
     const task: PipelineType = 'feature-extraction';
-    const [model, setModel] = useState('all-MiniLM-L6-v2');
+    const [model, setModel] = useState(EmbeddingsModels[0]);
     const [progress, setProgress] = useState(0);
+    const [ready, setReady] = useState(true);
 
     const extractor  = useRef<FeatureExtractionPipeline | null>(null);
 
@@ -31,13 +32,14 @@ export const EmbeddingsProvider = ({ children }: { children: React.ReactNode }) 
     }
 
     const initPipeline = async () => {
-        const e = await pipeline(task, model, {
+        const e = await pipeline(task, `embeddings/${model}`, {
             //@ts-ignore
             device: !!navigator.gpu ? 'webgpu' : 'wasm',
             progress_callback: (p: any) => setProgress(p.progress),
         })
 
         extractor.current = e;
+        setReady(true);
     }
 
     const calculateEmbeddings = async (input: string) => {
@@ -61,11 +63,11 @@ export const EmbeddingsProvider = ({ children }: { children: React.ReactNode }) 
     };    
     
     useEffect(() => {
-        initPipeline()
+      initPipeline();
     }, [model])
 
   return (
-    <EmbeddingsContext.Provider value={{ calculateEmbeddings, saveEmbeddings, getQuery, progress, model, setModel }}>
+    <EmbeddingsContext.Provider value={{ calculateEmbeddings, saveEmbeddings, getQuery, progress, ready, model, setModel }}>
       {children}
     </EmbeddingsContext.Provider>
   );
