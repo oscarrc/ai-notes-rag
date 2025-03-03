@@ -3,11 +3,20 @@
 import ChatAnswer from './_components/ChatAnswer';
 import ChatInput from './_components/ChatInput';
 import ChatQuestion from './_components/ChatQuestion';
+import { useEmbeddings } from '@/app/_hooks/useEmbeddings';
 import { useInference } from '@/app/_hooks/useInference';
 
 const ChatTab = () => {
   const { history, sendMessage } = useInference();
+  const { getQuery, calculateEmbeddings } = useEmbeddings();
+
   const hasHistory = history.length > 1;
+
+  const handleSubmit = async (text: string) => {
+    const embeddings = await calculateEmbeddings(text);
+    const context = await getQuery(embeddings);
+    sendMessage(text, context);
+  };
 
   return (
     <section className='flex flex-1 flex-col justify-end p-8'>
@@ -27,7 +36,10 @@ const ChatTab = () => {
             Ask any question about your notes
           </h2>
         )}
-        <ChatInput onSubmit={sendMessage} />
+        <ChatInput
+          onSubmit={handleSubmit}
+          className={hasHistory ? 'sticky bottom-8' : ''}
+        />
       </div>
     </section>
   );
