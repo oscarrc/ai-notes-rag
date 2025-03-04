@@ -1,11 +1,10 @@
 'use client';
 
 import {
-  AutoModelForCausalLM,
-  AutoTokenizer,
   InterruptableStoppingCriteria,
   TextStreamer,
   env,
+  pipeline,
 } from '@huggingface/transformers';
 import { createContext, useEffect, useRef, useState } from 'react';
 
@@ -14,7 +13,13 @@ env.remoteHost = '/api/models';
 env.remotePathTemplate = '{model}';
 
 const BASE_PROMPT =
-  "You are a helpful assistant. Your role is to provide helpful answers based on the role context provided from the user notes. You should answer with 'I don't find anything related to that in your notes' if context is provided and it is empty";
+  'You are a helpful assistant. Your role is to provide helpful answers based on the role context provided from the user notes.';
+
+export enum Status {
+  IDLE = 'IDLE',
+  LOADING = 'LOADING',
+  GENERATING = 'GENERATING',
+}
 
 export const InferenceContext = createContext<any>(null);
 export const InferenceModels = ['Llama-3.2-1B-Instruct-q4f16'];
@@ -27,15 +32,16 @@ export const InferenceProvider = ({
   const [model, setModel] = useState(InferenceModels[0]);
   const [progress, setProgress] = useState(0);
   const [ready, setReady] = useState(false);
+  const [status, setStatus] = useState(Status.IDLE);
   const [history, setHistory] = useState<HistoryMessage[]>([
     { role: 'system', content: BASE_PROMPT },
   ]);
-  const tokenizerRef = useRef<any>(null);
-  const modelRef = useRef<any>(null);
+  const generatorRef = useRef<any>(null);
   const stoppingCriteria = useRef(new InterruptableStoppingCriteria());
 
   const initPipeline = async () => {
-    tokenizerRef.current = await AutoTokenizer.from_pretrained(
+    generatorRef.current = await pipeline(
+      'text-generation',
       `inference/${model}`,
       {
         //@ts-ignore
@@ -43,32 +49,15 @@ export const InferenceProvider = ({
         progress_callback: (p: any) => setProgress(p.progress),
       }
     );
-
-    modelRef.current = await AutoModelForCausalLM.from_pretrained(
-      `inference/${model}`,
-      {
-        dtype: 'q4f16',
-        //@ts-ignore
-        device: !!navigator.gpu ? 'webgpu' : 'wasm',
-        progress_callback: (p: any) => setProgress(p.progress),
-      }
-    );
-
     setReady(true);
   };
 
   const generateText = async (messages: HistoryMessage[]) => {
-    if (!tokenizerRef.current || !modelRef.current) return;
-    console.log(messages);
-    const tokenizer = tokenizerRef.current;
-    const model = modelRef.current;
+    if (!generatorRef.current) return;
+
+    const tokenizer = generatorRef.current.tokenizer;
+
     let partialResponse = '';
-
-    const inputs = tokenizer.apply_chat_template(messages, {
-      add_generation_prompt: true,
-      return_dict: true,
-    });
-
     let startTime;
     let numTokens = 0;
     let tps: number;
@@ -107,37 +96,31 @@ export const InferenceProvider = ({
     });
 
     try {
-      const { sequences } = await model.generate({
-        input_ids: inputs.input_ids,
-        attention_mask: inputs.attention_mask,
+      setStatus(Status.GENERATING);
+      await generatorRef.current(messages, {
         do_sample: false,
         max_new_tokens: 1024,
         streamer,
         stopping_criteria: stoppingCriteria.current,
         return_dict_in_generate: true,
       });
-
-      // const decoded = tokenizer.batch_decode(sequences, {
-      //   skip_special_tokens: true,
-      // });
-
-      // setHistory((h) => [...h, { role: 'assistant', content: decoded }]);
-
-      // return decoded;
     } catch (error) {
       console.error('Error during model execution:', error);
+    } finally {
+      setStatus(Status.IDLE);
     }
   };
 
-  const sendMessage = async (message: string, context: string) => {
+  const sendMessage = async (message: string, context: EmbeddingRecord[]) => {
     const newHistory = [...history];
-    newHistory.push({ role: 'user', content: message });
-    newHistory.push({
-      role: 'context',
-      content: "User's birthday is 10th december 1987",
-    });
-    if (context) newHistory.push({ role: 'context', content: context });
 
+    if (context.length > 0) {
+      context.forEach((c) => {
+        newHistory.push({ role: 'system', content: `Knowledge: ${c.content}` });
+      });
+    }
+
+    newHistory.push({ role: 'user', content: message });
     setHistory(newHistory);
     await generateText(newHistory);
   };
@@ -154,6 +137,8 @@ export const InferenceProvider = ({
         history,
         sendMessage,
         generateText,
+        status,
+        setStatus,
         stoppingCriteria,
         model,
         setModel,
