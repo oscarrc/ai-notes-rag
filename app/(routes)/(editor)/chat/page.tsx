@@ -9,7 +9,7 @@ import { useEmbeddings } from '@/app/_hooks/useEmbeddings';
 import { useInference } from '@/app/_hooks/useInference';
 
 const ChatTab = () => {
-  const { history, sendMessage, status, setStatus, stoppingCriteria } =
+  const { history, sources, sendMessage, status, setStatus, stoppingCriteria } =
     useInference();
   const { getQuery, calculateEmbeddings } = useEmbeddings();
 
@@ -60,6 +60,7 @@ const ChatTab = () => {
                   key={`assistant-${i}`}
                   text={h.content}
                   isGenerating={status === Status.GENERATING}
+                  sources={sources}
                 />
               );
             else return null;

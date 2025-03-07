@@ -1,28 +1,24 @@
 import { VscCopy, VscRefresh, VscSave } from 'react-icons/vsc';
 
 import ButtonSquare from '@/app/_components/ButtonSquare';
+import ChatSource from './ChatSource';
 
 interface ChatAnswerProps {
   text: string;
   isGenerating: boolean;
+  sources?: FileNode[];
 }
 
-const ChatAnswer = ({ text, isGenerating }: ChatAnswerProps) => {
+const ChatAnswer = ({ text, isGenerating, sources = [] }: ChatAnswerProps) => {
   return (
     <div className='flex w-full max-w-2xl flex-col gap-4'>
       <div className='flex flex-col gap-4 rounded-box p-4'>
         <div className='prose'>{text}</div>
-        {!isGenerating && (
-          <div className='flex flex-1 justify-end gap-2'>
-            <div className='badge badge-neutral badge-outline badge-md'>
-              Source 1
-            </div>
-            <div className='badge badge-neutral badge-outline badge-md'>
-              Source 2
-            </div>
-            <div className='badge badge-neutral badge-outline badge-md'>
-              Source 3
-            </div>
+        {!isGenerating && sources.length > 0 && (
+          <div className='flex flex-1 flex-wrap justify-end gap-2'>
+            {sources.map((source, index) => (
+              <ChatSource key={`source-${index}`} source={source} />
+            ))}
           </div>
         )}
       </div>

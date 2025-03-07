@@ -13,7 +13,7 @@ env.remoteHost = '/api/models';
 env.remotePathTemplate = '{model}';
 
 const BASE_PROMPT =
-  'You are a helpful assistant that answers questions based only on the provided context. If the answer cannot be found in the context, say "I don\'t have enough information to answer this question." When answering, cite the specific parts of the context you used. Do not make up information.';
+  'You are a helpful assistant that answers questions based only on the provided notes. If the answer cannot be found in the notes, say "I don\'t have enough information to answer this question." When answering, cite the specific notes you used. Do not make up information.';
 
 export enum Status {
   IDLE = 'IDLE',
@@ -36,6 +36,7 @@ export const InferenceProvider = ({
   const [history, setHistory] = useState<HistoryMessage[]>([
     { role: 'system', content: BASE_PROMPT },
   ]);
+  const [sources, setSources] = useState<FileNode[]>([]);
   const generatorRef = useRef<any>(null);
   const stoppingCriteria = useRef(new InterruptableStoppingCriteria());
 
@@ -118,6 +119,15 @@ export const InferenceProvider = ({
     };
     const newHistory: HistoryMessage[] = [systemPrompt];
 
+    // Convert embedding records to FileNode sources
+    const newSources: FileNode[] = context.map((c) => ({
+      name: c.name,
+      path: c.path,
+      extension: c.path.split('.').pop(),
+    }));
+
+    setSources(newSources);
+
     if (context.length > 0) {
       const contextBlock = context
         .map((c, index) => `[Document ${index + 1}] ${c.path}\n${c.content}`)
@@ -125,13 +135,13 @@ export const InferenceProvider = ({
 
       newHistory.push({
         role: 'system',
-        content: `CONTEXT:\n${contextBlock}\n\nAnswer the user's question based only on this context.`,
+        content: `CONTEXT:\n${contextBlock}\n\nAnswer the user's question based only on this notes. DO NOT mention the notes or citations in your answer.`,
       } as HistoryMessage);
     } else {
       newHistory.push({
         role: 'system',
         content:
-          'No relevant context was found. If you cannot answer from general knowledge, say you do not have enough information.',
+          'No relevant notes were found. If you cannot answer from general knowledge, say you do not have enough information.',
       } as HistoryMessage);
     }
 
@@ -151,6 +161,7 @@ export const InferenceProvider = ({
         progress,
         ready,
         history,
+        sources,
         sendMessage,
         generateText,
         status,
