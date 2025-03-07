@@ -1,4 +1,3 @@
-'use client'
 export const IS_APPLE = navigator && /Mac|iPod|iPhone|iPad/.test(navigator?.platform);
 
 export function ctrlOrMeta(metaKey: boolean, ctrlKey: boolean): boolean {

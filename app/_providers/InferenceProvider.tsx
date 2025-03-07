@@ -13,7 +13,7 @@ env.remoteHost = '/api/models';
 env.remotePathTemplate = '{model}';
 
 const BASE_PROMPT =
-  'You are a helpful assistant. Your role is to provide helpful answers based on the role context provided from the user notes.';
+  'You are a helpful assistant that answers questions based only on the provided context. If the answer cannot be found in the context, say "I don\'t have enough information to answer this question." When answering, cite the specific parts of the context you used. Do not make up information.';
 
 export enum Status {
   IDLE = 'IDLE',
@@ -112,15 +112,31 @@ export const InferenceProvider = ({
   };
 
   const sendMessage = async (message: string, context: EmbeddingRecord[]) => {
-    const newHistory = [...history];
+    const systemPrompt: HistoryMessage = {
+      role: 'system',
+      content: BASE_PROMPT,
+    };
+    const newHistory: HistoryMessage[] = [systemPrompt];
 
     if (context.length > 0) {
-      context.forEach((c) => {
-        newHistory.push({ role: 'system', content: `Knowledge: ${c.content}` });
-      });
+      const contextBlock = context
+        .map((c, index) => `[Document ${index + 1}] ${c.path}\n${c.content}`)
+        .join('\n\n');
+
+      newHistory.push({
+        role: 'system',
+        content: `CONTEXT:\n${contextBlock}\n\nAnswer the user's question based only on this context.`,
+      } as HistoryMessage);
+    } else {
+      newHistory.push({
+        role: 'system',
+        content:
+          'No relevant context was found. If you cannot answer from general knowledge, say you do not have enough information.',
+      } as HistoryMessage);
     }
 
-    newHistory.push({ role: 'user', content: message });
+    newHistory.push({ role: 'user', content: message } as HistoryMessage);
+
     setHistory(newHistory);
     await generateText(newHistory);
   };

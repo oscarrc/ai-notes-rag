@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
 import { connectDB, getTable } from './helper';
+
+import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -39,8 +40,14 @@ export async function PUT(req: Request) {
   try {
     const db = await connectDB();
     const table = await getTable(db, 'embeddings');
-    const results = await table.search(data).distanceType("cosine").limit(10).toArray()
-
+    
+    // Improved search with higher relevant results, lower threshold
+    const results = await table
+      .search(data)
+      .distanceType("l2")
+      .limit(5)
+      .toArray();
+    
     return NextResponse.json(results);
   } catch (error) {
     console.log(error);
