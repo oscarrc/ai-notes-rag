@@ -52,18 +52,22 @@ const ChatTab = () => {
       >
         {status === Status.LOADING || hasHistory ? (
           history.map((h: HistoryMessage, i: number) => {
+            const isLatestMessage = i === history.length - 1;
+
             if (h.role === 'user')
               return <ChatQuestion key={`user-${i}`} text={h.content} />;
-            else if (h.role === 'assistant')
+
+            if (h.role === 'assistant')
               return (
                 <ChatAnswer
                   key={`assistant-${i}`}
                   text={h.content}
-                  isGenerating={status === Status.GENERATING}
-                  sources={sources}
+                  isGenerating={status === Status.GENERATING && isLatestMessage}
+                  sources={h.sources || []}
                 />
               );
-            else return null;
+
+            return null;
           })
         ) : (
           <h2 className='px-4 text-center text-4xl font-bold'>

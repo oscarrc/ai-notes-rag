@@ -41,16 +41,15 @@ export async function PUT(req: Request) {
     const db = await connectDB();
     const table = await getTable(db, 'embeddings');
     
-    // Improved search with higher relevant results, lower threshold
     const results = await table
       .search(data)
-      .distanceType("l2")
+      .distanceType("cosine")
       .limit(5)
       .toArray();
     
     return NextResponse.json(results);
   } catch (error) {
-    console.log(error);
-    return NextResponse.json({ error: 'Failed to connectDB' }, { status: 500 });
+    console.log("Error in vector search:", error);
+    return NextResponse.json({ error: 'Failed to perform vector search' }, { status: 500 });
   }
 }
