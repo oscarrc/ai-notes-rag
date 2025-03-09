@@ -78,6 +78,7 @@ export const InferenceProvider = ({
     const callback_function = (output: any) => {
       partialResponse += output;
 
+      setStatus(Status.GENERATING);
       setHistory((h) => {
         const newHistory = [...h];
 
@@ -112,10 +113,9 @@ export const InferenceProvider = ({
     });
 
     try {
-      setStatus(Status.GENERATING);
       await generatorRef.current(messages, {
-        do_sample: true, // Enable sampling for more creative responses
-        temperature: 0.7, // Add some temperature to make responses more varied
+        do_sample: true,
+        temperature: 0.7,
         max_new_tokens: 1024,
         streamer,
         stopping_criteria: stoppingCriteria.current,
@@ -126,6 +126,17 @@ export const InferenceProvider = ({
     } finally {
       setStatus(Status.IDLE);
     }
+  };
+
+  const addUserMessage = (message: string) => {
+    // Add user message to history immediately
+    setHistory((prevHistory) => [
+      ...prevHistory,
+      { role: 'user', content: message },
+    ]);
+
+    // Keep status as LOADING to show loader
+    setStatus(Status.LOADING);
   };
 
   const sendMessage = async (message: string, context: EmbeddingRecord[]) => {
@@ -167,10 +178,11 @@ export const InferenceProvider = ({
     // Add conversation history
     newHistory.push(...conversationHistory);
 
-    // Add the new user message
-    newHistory.push({ role: 'user', content: message });
-
-    setHistory(newHistory);
+    // Add the new user message (if not already in history)
+    const lastMessage = history[history.length - 1];
+    if (lastMessage?.role !== 'user' || lastMessage?.content !== message) {
+      newHistory.push({ role: 'user', content: message });
+    }
 
     await generateText(newHistory, sources);
   };
@@ -186,6 +198,7 @@ export const InferenceProvider = ({
         ready,
         history,
         sendMessage,
+        addUserMessage,
         generateText,
         status,
         setStatus,
