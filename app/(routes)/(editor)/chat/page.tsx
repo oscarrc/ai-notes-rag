@@ -9,7 +9,7 @@ import { useEmbeddings } from '@/app/_hooks/useEmbeddings';
 import { useInference } from '@/app/_hooks/useInference';
 
 const ChatTab = () => {
-  const { history, sources, sendMessage, status, setStatus, stoppingCriteria } =
+  const { history, sendMessage, status, setStatus, stoppingCriteria } =
     useInference();
   const { getQuery, calculateEmbeddings } = useEmbeddings();
 
