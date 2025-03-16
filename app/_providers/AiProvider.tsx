@@ -87,7 +87,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const fetchEmbeddings = async (data: Embedding) => {
-    console.log({ data });
     const result = await fetch(
       `${process.env.NEXT_PUBLIC_BASE_URL}api/embeddings`,
       {
@@ -95,7 +94,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
         body: JSON.stringify(data),
       }
     );
-    console.log({ result });
     const files = await result.json();
     return files;
   };
