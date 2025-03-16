@@ -29,6 +29,7 @@ interface EmbeddingRecord {
 interface HistoryMessage {
   role: 'user' | 'assistant' | 'system' | 'context';
   content: string;
+  sources?: FileNode[];
 }
 
 enum FileType {

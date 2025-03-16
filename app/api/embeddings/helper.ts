@@ -1,12 +1,13 @@
 import * as lancedb from '@lancedb/lancedb';
+
 import {
-  Schema,
   Field,
   FixedSizeList,
-  Int32,
   Float32,
+  Schema,
   Utf8,
 } from 'apache-arrow';
+
 import path from 'path';
 
 const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
@@ -37,7 +38,7 @@ export const getTable = async (db: any, tableName: string) => {
   const tableNames = await db.tableNames();
 
   try {
-    if (tableNames.includes[tableName]) {
+    if (tableNames.includes(tableName)) {
       return await db.openTable(tableName);
     }
 
