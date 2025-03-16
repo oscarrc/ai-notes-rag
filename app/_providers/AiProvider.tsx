@@ -31,10 +31,7 @@ export enum AiStatus {
 }
 
 export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
-export const GENERATION_MODELS = [
-  'SmolLM2-1.7B-Instruct',
-  'Llama-3.2-1B-Instruct-q4f16',
-];
+export const GENERATION_MODELS = ['Llama-3.2-1B-Instruct-q4f16'];
 
 export const AiContext = createContext<any>(null);
 
@@ -107,25 +104,24 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
 
   const getPrompt = async (notes: EmbeddingRecord[], question: string) => {
     const context = notes
-      .map(
-        (note, idx) => `
-          <|source_start|>
-            <|source_id_start|>${note.name} (${idx})<|source_id_end|>
-            ${note.content.trim()}
-          <|source_end|>
-        `
-      )
-      .join('\n');
+      .map((note) => {
+        return `[${note.path}] ${note.name}: ${note.content.trim()}`;
+      })
+      .join('\n\n');
 
-    return `
-      <|query_start|>
-        ${question}. 
-        Use only sources to answer the question. 
-        If there's no relevant information in the sources answer "There is not enough informations on your notes to answer this question."
-      <|query_end|>
-      ${context}
-      <|source_analysis_start|>
-    `;
+    // Format using a structure that works well with instruction-based models
+    return `[INST] 
+    I'll provide you with some sources and a question. Please answer the question based ONLY on the provided sources.
+
+    Question: ${question}
+
+    Sources:
+    ${context}
+
+    If you can't find the answer in the sources, just say "I don't have enough information to answer this question."
+
+    Answer in a clear, concise way. If you use information from the sources, include the source IDs in your answer like this: [source_1], [source_2], etc.
+    [/INST]`;
   };
 
   const getNotes = async (query: string) => {
@@ -172,7 +168,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
       {
         //@ts-ignore
         device: !!navigator.gpu ? 'webgpu' : 'wasm',
-        dtype: 'q8',
+        // dtype: 'q8',
         progress_callback: (p: any) =>
           !isNaN(p.progress) && setGenerationProgress(p.progress),
       }
@@ -188,7 +184,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const generateAnswer = async (question: string) => {
     if (!generator.current || !streamer.current) return;
 
-    setStatus(AiStatus.GENERATING);
+    setStatus(AiStatus.LOADING);
     setConversation((c) => [...c, { role: 'user', content: question }]);
     setTps(0);
     setNumTokens(0);
@@ -203,7 +199,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
         return_full_text: false,
         streamer: streamer.current,
       });
-      console.log(result);
+
       const response = Array.isArray(result[0]) ? result[0][0] : result[0];
 
       if (!response) {

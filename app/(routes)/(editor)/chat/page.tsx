@@ -10,7 +10,7 @@ import { useCallback } from 'react';
 const ChatTab = () => {
   const { conversation, status, generateAnswer, stopper } = useAi();
 
-  const hasConversation = conversation.length > 1;
+  const hasConversation = conversation.length > 0;
 
   const handleSubmit = useCallback(
     async (text: string) => {
