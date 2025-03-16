@@ -1,30 +1,35 @@
 'use client';
 
+import { EMBEDDING_MODELS, GENERATION_MODELS } from '../_providers/AiProvider';
 import React, { ChangeEvent, useRef } from 'react';
-import { VscClose } from 'react-icons/vsc';
-import { EmbeddingsModels } from '../_providers/EmbeddingsProvider';
-import { useEmbeddings } from '../_hooks/useEmbeddings';
-import { InferenceModels } from '../_providers/InferenceProvider';
-import { useInference } from '../_hooks/useInference';
+
 import CircularProgress from './CircularProgress';
-import { VscCheck } from "react-icons/vsc";
+import { VscCheck } from 'react-icons/vsc';
+import { VscClose } from 'react-icons/vsc';
+import { useAi } from '../_hooks/useAi';
 
 const Settings = () => {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
-  const { model: embeddingsModel, setModel: setEmbbedingsModel, progress: embeddingsProgress, ready: embeddingsReady  } = useEmbeddings();
-  const { model: inferenceModel, setModel: setInferenceModel, progress: inferenceProgress, ready: inferenceReady } = useInference();
+  const {
+    embeddingModel,
+    embeddingProgress,
+    setEmbeddingModel,
+    generationModel,
+    generationProgress,
+    setGenerationModel,
+  } = useAi();
 
-  const handleEmbeddingsModel = (e:ChangeEvent<HTMLSelectElement>) => {
+  const handleEmbeddingsModel = (e: ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if(!EmbeddingsModels.includes(value)) return;
-    else setEmbbedingsModel(value);
-  }
+    if (!EMBEDDING_MODELS.includes(value)) return;
+    else setEmbeddingModel(value);
+  };
 
-  const handleInferenceModel = (e:ChangeEvent<HTMLSelectElement>) => {
+  const handleInferenceModel = (e: ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
-    if(!InferenceModels.includes(value)) return;
-    else setInferenceModel(value);
-  }
+    if (!GENERATION_MODELS.includes(value)) return;
+    else setGenerationModel(value);
+  };
 
   return (
     <dialog id='settings' className='modal' ref={dialogRef}>
@@ -43,32 +48,50 @@ const Settings = () => {
               <div className='label'>
                 <span className='label-text'>Select inference model</span>
               </div>
-              <div className='flex flex-row gap-4 items-center'>
-                <select value={inferenceModel} onChange={handleInferenceModel} className='select select-bordered select-sm flex-1'>
-                  {
-                    InferenceModels.map(m => <option key={m}>{m}</option>)
-                  }                
-                </select>                
-                <div className={`h-8 w-8 place-items-center items-center justify-center swap swap-rotate ${inferenceReady ? 'swap-active' : ''}`}>
-                  <VscCheck className="h-6 w-6 text-primary swap-on" />
-                  <CircularProgress value={inferenceProgress} className='swap-off'/> 
-                </div> 
+              <div className='flex flex-row items-center gap-4'>
+                <select
+                  value={generationModel}
+                  onChange={handleInferenceModel}
+                  className='select select-bordered select-sm flex-1'
+                >
+                  {GENERATION_MODELS.map((m) => (
+                    <option key={m}>{m}</option>
+                  ))}
+                </select>
+                <div
+                  className={`swap swap-rotate h-8 w-8 place-items-center items-center justify-center ${generationProgress === 100 ? 'swap-active' : ''}`}
+                >
+                  <VscCheck className='swap-on h-6 w-6 text-primary' />
+                  <CircularProgress
+                    value={generationProgress}
+                    className='swap-off'
+                  />
+                </div>
               </div>
             </label>
             <label className='form-control w-full max-w-lg'>
               <div className='label'>
                 <span className='label-text'>Select embeddings model</span>
-              </div>              
+              </div>
               <div className='flex flex-row gap-4'>
-                <select value={embeddingsModel} onChange={handleEmbeddingsModel} className='select select-bordered select-sm flex-1'>
-                  {
-                    EmbeddingsModels.map(m => <option key={m}>{m}</option>)
-                  }                
+                <select
+                  value={embeddingModel}
+                  onChange={handleEmbeddingsModel}
+                  className='select select-bordered select-sm flex-1'
+                >
+                  {EMBEDDING_MODELS.map((m) => (
+                    <option key={m}>{m}</option>
+                  ))}
                 </select>
-                <div className={`h-8 w-8 place-items-center items-center justify-center swap swap-rotate ${embeddingsReady ? 'swap-active' : ''}`}>
-                  <VscCheck className="h-6 w-6 text-primary swap-on" />
-                  <CircularProgress value={embeddingsProgress} className='swap-off'/> 
-                </div>             
+                <div
+                  className={`swap swap-rotate h-8 w-8 place-items-center items-center justify-center ${embeddingProgress === 100 ? 'swap-active' : ''}`}
+                >
+                  <VscCheck className='swap-on h-6 w-6 text-primary' />
+                  <CircularProgress
+                    value={embeddingProgress}
+                    className='swap-off'
+                  />
+                </div>
               </div>
             </label>
             <div className='flex w-full max-w-lg justify-between'>
