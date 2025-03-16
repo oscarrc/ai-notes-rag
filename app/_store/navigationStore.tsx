@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { newTab } from '../_utils/tabs';
 
 interface NavigationState {
   tabs: Partial<FileNode>[];
@@ -15,8 +16,6 @@ interface NavigationState {
 
   selectNode: (node: FileNode) => void;
 }
-
-const newTab = { name: 'New Tab', path: '/' };
 
 const useNavigationStore = create<NavigationState>((set) => ({
   tabs: [newTab],
@@ -55,7 +54,7 @@ const useNavigationStore = create<NavigationState>((set) => ({
 
   setActive: (path) =>
     set((state) => {
-      const index = state.tabs.findIndex((t) => t.path === path);
+      const index = state.tabs.findIndex((t) => t.path === decodeURI(path));
       if (index < 0) return state;
       return { activeTab: index };
     }),

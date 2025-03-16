@@ -1,5 +1,7 @@
-import type { Metadata } from 'next';
 import '@/app/globals.css';
+
+import { AiProvider } from '../_providers/AiProvider';
+import type { Metadata } from 'next';
 import QueryProvider from '@/app/_providers/QueryProvider';
 
 export const metadata: Metadata = {
@@ -11,7 +13,9 @@ const RootLayout = ({ children }: LayoutProps) => {
   return (
     <html lang='en'>
       <body>
-        <QueryProvider>{children}</QueryProvider>
+        <AiProvider>
+          <QueryProvider>{children}</QueryProvider>
+        </AiProvider>
       </body>
     </html>
   );

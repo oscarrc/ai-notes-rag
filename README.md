@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Notes: A RAG-Driven AI-Powered Personal Knowledge Base
 
-## Getting Started
+## Overview
+**AI Notes** is a self-hostable, markdown-based note-taking web application designed to provide users with a privacy-focused, AI-powered knowledge management system. The application integrates **Retrieval-Augmented Generation (RAG)** and **semantic search** capabilities, allowing users to interact with their notes using an AI chatbot that generates responses based on stored content. The system is optimized for in-browser execution using **Small Language Models (SLMs)** and lightweight vector databases, ensuring efficient and secure knowledge retrieval without relying on cloud-based services.
 
-First, run the development server:
+## Key Features
+- **Markdown-Based Note-Taking**: Create, edit, and organize notes using markdown syntax.
+- **Semantic Search**: Efficiently search through notes using vector-based semantic search.
+- **AI-Powered Querying**: Interact with your notes using an AI chatbot powered by Retrieval-Augmented Generation (RAG).
+- **In-Browser Execution**: AI models run directly in the browser using **ONNX Runtime**, ensuring privacy and reducing reliance on external servers.
+- **Self-Hostable**: Deploy the application on your own infrastructure using **Docker**.
+- **Lightweight Vector Database**: Utilizes **LanceDB** for efficient storage and retrieval of embeddings.
+- **Cross-Platform Accessibility**: Built as a **Progressive Web App (PWA)**, ensuring a responsive and lightweight user experience across devices.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Technologies Used
+- **Frontend**: Next.js
+- **Backend**: Next.js API routes
+- **AI Models**: Small Language Models (SLMs) optimized via distillation and quantization
+- **Vector Database**: LanceDB
+- **In-Browser Inference**: ONNX Runtime / Transformers.js
+- **Containerization**: Docker
+- **Version Control**: Git (GitHub)
+
+## Installation
+### Prerequisites
+- Node.js (v16 or higher)
+- Docker (optional, for self-hosting)
+- Git
+
+### Steps
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/your-username/ai-notes.git
+   cd ai-notes
+   ```
+
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Run the Application Locally**:
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:3000`.
+
+4. **Self-Hosting with Docker**:
+   - Build the Docker image:
+     ```bash
+     docker build -t ai-notes .
+     ```
+   - Run the Docker container:
+     ```bash
+     docker run -p 3000:3000 ai-notes
+     ```
+   The application will be available at `http://localhost:3000`.
+
+## Usage
+1. **Create Notes**: Use the markdown editor to create and edit notes.
+2. **Semantic Search**: Use the search bar to find relevant notes based on semantic similarity.
+3. **AI Chatbot**: Interact with the AI chatbot to query your notes. The chatbot will generate responses based on the content of your notes using RAG.
+
+## Project Structure
+```
+ai-notes/
+├── public/              # Static assets
+├── src/                 # Source code
+│   ├── components/      # React components
+│   ├── pages/           # Next.js pages and API routes
+│   ├── models/          # AI models and ONNX runtime integration
+│   ├── db/              # Vector database (LanceDB) integration
+│   └── styles/          # CSS/SCSS styles
+├── Dockerfile           # Docker configuration
+├── next.config.js       # Next.js configuration
+└── package.json         # Node.js dependencies and scripts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Contributing
+Contributions are welcome! If you'd like to contribute, please follow these steps:
+1. Fork the repository.
+2. Create a new branch for your feature or bugfix.
+3. Commit your changes and push to your branch.
+4. Submit a pull request with a detailed description of your changes.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Acknowledgments
+- **Wizard of Wikipedia Dataset** (Dinan et al., 2019) for knowledge-grounded conversational AI.
+- **Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks** (Lewis et al., 2020) for RAG-based systems.
+- **DistilBERT** (Sanh et al., 2020) and **MobileBERT** (Sun et al., 2020) for model distillation and quantization techniques.
 
-## Learn More
+## Contact
+For any questions or feedback, please contact:
+- **Oscar Rey Castro**  
+  Email: or24aab@herts.ac.uk  
+  GitHub: [oscarrc](https://github.com/oscarr)
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**AI Notes** is a project developed as part of the BSc Computer Science program at the University of Hertfordshire.  
+Supervisor: **Dr. Iain Werry**  
+Academic Year: 2024/25

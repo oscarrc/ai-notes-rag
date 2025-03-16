@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
@@ -11,10 +11,13 @@
     "format:fix": "prettier --write --ignore-path .gitignore ."
   },
   "dependencies": {
-    "@lexical/markdown": "^0.23.1",
-    "@lexical/react": "^0.23.1",
+    "@huggingface/transformers": "^3.3.3",
+    "@lancedb/lancedb": "^0.16.0",
+    "@lexical/markdown": "^0.24.0",
+    "@lexical/react": "^0.24.0",
     "@tanstack/react-query": "^5.66.0",
-    "lexical": "^0.23.1",
+    "idb": "^8.0.2",
+    "lexical": "^0.24.0",
     "next": "15.1.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
