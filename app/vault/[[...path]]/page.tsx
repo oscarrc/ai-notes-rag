@@ -1,7 +1,7 @@
 'use client';
 
 import Breadcrumbs from '@/app/_components/Breadcrumbs';
-import MarkdownEditor from '@/app/(routes)/(editor)/vault/_components/editor';
+import MarkdownEditor from '@/app/vault/_components/editor';
 import { useAi } from '@/app/_hooks/useAi';
 import { useCallback } from 'react';
 import { useFilesQuery } from '@/app/_hooks/useFilesQuery';

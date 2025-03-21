@@ -2,13 +2,13 @@
 
 import ButtonSquare from '@/app/_components/ButtonSquare';
 import Tab from './_components/Tab';
-import TabList from './_components/TabList';
 import TabActions from './_components/TabActions';
+import TabList from './_components/TabList';
 import TabMenu from './_components/TabMenu';
-import { usePathname } from 'next/navigation';
 import { VscAdd } from 'react-icons/vsc';
-import useNavigationStore from '@/app/_store/navigationStore';
 import { useEffect } from 'react';
+import useNavigationStore from '@/app/_store/navigationStore';
+import { usePathname } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 
 const Tabbar = () => {
@@ -20,6 +20,7 @@ const Tabbar = () => {
   useEffect(() => {
     setActive(pathname);
   }, [pathname]);
+
   useEffect(() => {
     const activePath = tabs[activeTab].path || '/';
     if (pathname !== activePath) router.push(activePath);
