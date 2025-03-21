@@ -50,9 +50,7 @@ const ChatTab = () => {
                 <ChatAnswer
                   key={`assistant-${i}`}
                   text={h.content}
-                  isGenerating={
-                    status === AiStatus.GENERATING && isLatestMessage
-                  }
+                  isGenerating={status === AiStatus.GENERATING}
                   sources={h.sources || []}
                 />
               );

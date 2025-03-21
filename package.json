@@ -30,6 +30,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/serviceworker": "^0.0.126",
     "daisyui": "^4.12.23",
     "eslint": "^9.19.0",
     "eslint-config-next": "15.1.6",

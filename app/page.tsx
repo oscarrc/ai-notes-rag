@@ -1,15 +1,23 @@
 'use client';
 
-import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
-import useNavigationStore from '@/app/_store/navigationStore';
-import { getFilePath } from '@/app/_utils/files';
-import { showModal } from '@/app/_utils/modals';
 import { IS_APPLE } from '@/app/_utils/shortcuts';
 import { chatTab } from '@/app/_utils/tabs';
+import { getFilePath } from '@/app/_utils/files';
+import { showModal } from '@/app/_utils/modals';
+import { useEffect } from 'react';
+import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
+import useNavigationStore from '@/app/_store/navigationStore';
 
 const NewTab = () => {
   const { addTab, selectedNode } = useNavigationStore();
   const { createFile } = useFilesQuery();
+
+  useEffect(() => {
+    navigator.serviceWorker.register(
+      new URL('./_workers/serviceWorker.ts', import.meta.url),
+      { scope: '/' }
+    );
+  }, []);
 
   return (
     <section className='flex h-full items-center justify-center p-8'>
