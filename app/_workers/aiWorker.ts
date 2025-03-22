@@ -1,5 +1,3 @@
-// ai-worker.ts
-
 import {
   AutoModelForCausalLM,
   AutoTokenizer,
@@ -7,19 +5,24 @@ import {
   InterruptableStoppingCriteria,
   PreTrainedModel,
   PreTrainedTokenizer,
-  Tensor,
   TextStreamer,
   env,
   pipeline,
 } from '@huggingface/transformers';
-
-import { AiStatus } from '../_providers/AiProvider';
 
 // Configure Hugging Face environment
 env.allowRemoteModels = true;
 env.useBrowserCache = true;
 env.remoteHost = '/api/models';
 env.remotePathTemplate = '{model}';
+
+enum AiStatus {
+  IDLE = 'idle',
+  GENERATING = 'generating',
+  LOADING = 'loading',
+  READY = 'ready',
+  ERROR = 'error',
+}
 
 // Define worker message types
 type WorkerMessage = {
@@ -102,8 +105,8 @@ async function initGenerator(generationModel: string): Promise<{success: boolean
       token_callback_function: () => {
         startTime = startTime ?? performance.now();
         numTokens += 1;
-        tps = (numTokens / (performance.now() - startTime)) * 1000;
-        self.postMessage({ type: 'PERFORMANCE_UPDATE', tps, numTokens });
+        tps = (numTokens / (performance.now() - startTime)) * 1000;        
+        self.postMessage({ type: 'PERFORMANCE_UPDATE', tps, numTokens, totalTime: performance.now() - startTime });
       },
     });
     
@@ -144,7 +147,6 @@ async function generateAnswer(messages: any[]): Promise<{success: boolean, error
   });
 
   try {
-    // Reset metrics
     tps = 0;
     numTokens = 0;
     startTime = null;
@@ -164,7 +166,8 @@ async function generateAnswer(messages: any[]): Promise<{success: boolean, error
 
     // Send completion message
     self.postMessage({
-      type: 'GENERATION_COMPLETE'
+      type: 'GENERATION_COMPLETE',
+      content: response[0] || ''
     });
 
     self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.IDLE });

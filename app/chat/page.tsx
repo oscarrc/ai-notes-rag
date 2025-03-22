@@ -10,7 +10,8 @@ import { useAi } from '@/app/_hooks/useAi';
 import { useToast } from '../_hooks/useToast';
 
 const ChatTab = () => {
-  const { conversation, status, generateAnswer, stopGeneration, tps } = useAi();
+  const { conversation, status, generateAnswer, stopGeneration, performance } =
+    useAi();
   const { showToast } = useToast();
 
   const hasConversation = conversation.length > 0;
@@ -31,7 +32,13 @@ const ChatTab = () => {
   useEffect(() => {
     if (status === AiStatus.IDLE && conversation.length > 0) {
       showToast({
-        message: `Generation complete: ${tps.toFixed(2)} tokens per second`,
+        message: (
+          <>
+            Generation complete: Generated {performance.numTokens} in{' '}
+            {(performance.totalTime / 1000).toFixed(2)} seconds.
+            {performance.tps.toFixed(2)} tokens per second
+          </>
+        ),
         type: 'success',
         duration: 5000,
       });
@@ -76,7 +83,9 @@ const ChatTab = () => {
         <ChatInput
           onSubmit={handleSubmit}
           onStop={stopGeneration}
-          isGenerating={status === AiStatus.GENERATING}
+          isGenerating={
+            status === AiStatus.GENERATING || status === AiStatus.LOADING
+          }
           className={hasConversation ? 'sticky bottom-8' : ''}
         />
       </div>

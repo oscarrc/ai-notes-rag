@@ -9,6 +9,11 @@ import {
   useState,
 } from 'react';
 
+export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
+export const GENERATION_MODELS = ['Llama-3.2-1B-Instruct-q4f16'];
+
+export const AiContext = createContext<any>(null);
+
 export enum AiStatus {
   IDLE = 'idle',
   GENERATING = 'generating',
@@ -17,40 +22,21 @@ export enum AiStatus {
   ERROR = 'error',
 }
 
-export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
-export const GENERATION_MODELS = ['Llama-3.2-1B-Instruct-q4f16'];
-
-export const AiContext = createContext<any>(null);
-
 type PendingRequest = {
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
 };
-
-interface HistoryMessage {
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  sources?: {
-    name: string;
-    path: string;
-    extension?: string;
-  }[];
-}
-
-type Embedding = number[];
-
-interface EmbeddingRecord {
-  path: string;
-  name: string;
-  content: string;
-}
 
 export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const workerRef = useRef<Worker | null>(null);
   const pendingRequests = useRef<Map<string, PendingRequest>>(new Map());
 
   const [status, setStatus] = useState<AiStatus>(AiStatus.IDLE);
-  const [tps, setTps] = useState(0);
+  const [performance, setPerformance] = useState<AiPerformance>({
+    tps: 0,
+    numTokens: 0,
+    totalTime: 0,
+  });
   const [embeddingModel, setEmbeddingModel] = useState(EMBEDDING_MODELS[0]);
   const [embeddingProgress, setEmbeddingProgress] = useState(0);
   const [generationModel, setGenerationModel] = useState(GENERATION_MODELS[0]);
@@ -107,7 +93,8 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           break;
 
         case 'PERFORMANCE_UPDATE':
-          setTps(data.tps);
+          const { tps, numTokens, totalTime } = data;
+          setPerformance({ tps, numTokens, totalTime });
           break;
 
         case 'GENERATION_COMPLETE':
@@ -314,6 +301,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
         newHistory[newHistory.length - 1] = {
           role: 'assistant',
           content: newHistory[newHistory.length - 1].content + text,
+          sources: newHistory[newHistory.length - 1].sources,
         };
       } else {
         newHistory.push({
@@ -356,7 +344,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
       if (!workerRef.current) return;
 
       setConversation((c) => [...c, { role: 'user', content: question }]);
-      setTps(0);
+      setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
 
       try {
         setStatus(AiStatus.LOADING);
@@ -428,7 +416,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
         status,
         stopGeneration,
         progress,
-        tps,
+        performance,
       }}
     >
       {children}
