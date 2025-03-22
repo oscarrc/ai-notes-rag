@@ -32,6 +32,16 @@ interface HistoryMessage {
   sources?: FileNode[];
 }
 
+type ToastType = 'success' | 'error' | 'info' | 'warning';
+
+interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+  duration?: number;
+  progress?: number;
+}
+
 enum FileType {
   FILE = 'file',
   DIR = 'dir',
