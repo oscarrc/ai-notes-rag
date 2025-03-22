@@ -1,6 +1,5 @@
 'use client';
 
-import { InterruptableStoppingCriteria, env } from '@huggingface/transformers';
 import {
   createContext,
   useCallback,
@@ -57,8 +56,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const [generationModel, setGenerationModel] = useState(GENERATION_MODELS[0]);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [conversation, setConversation] = useState<HistoryMessage[]>([]);
-
-  const stopper = useRef(new InterruptableStoppingCriteria());
 
   const progress = useMemo((): number => {
     return (embeddingProgress + generationProgress) / 2;
@@ -342,6 +339,11 @@ Answer in a clear, concise way. If you use information from the sources, include
     });
   }, []);
 
+  const stopGeneration = () => {
+    if (!workerRef.current) return;
+    workerRef.current.postMessage({ type: 'STOP_GENERATION' });
+  };
+
   const generateAnswer = useCallback(
     async (question: string) => {
       if (!workerRef.current) return;
@@ -417,7 +419,7 @@ Answer in a clear, concise way. If you use information from the sources, include
         getNotes,
         conversation,
         status,
-        stopper,
+        stopGeneration,
         progress,
         tps,
       }}

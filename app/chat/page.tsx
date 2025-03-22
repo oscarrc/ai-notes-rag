@@ -8,7 +8,7 @@ import { useAi } from '@/app/_hooks/useAi';
 import { useCallback } from 'react';
 
 const ChatTab = () => {
-  const { conversation, status, generateAnswer, stopper } = useAi();
+  const { conversation, status, generateAnswer, stopGeneration } = useAi();
 
   const hasConversation = conversation.length > 0;
 
@@ -24,12 +24,6 @@ const ChatTab = () => {
     },
     [generateAnswer]
   );
-
-  const handleStop = useCallback(() => {
-    if (stopper.current) {
-      stopper.current.interrupt();
-    }
-  }, [stopper]);
 
   return (
     <section className='flex flex-1 flex-col justify-end p-8'>
@@ -69,7 +63,7 @@ const ChatTab = () => {
         )}
         <ChatInput
           onSubmit={handleSubmit}
-          onStop={handleStop}
+          onStop={stopGeneration}
           isGenerating={status === AiStatus.GENERATING}
           className={hasConversation ? 'sticky bottom-8' : ''}
         />
