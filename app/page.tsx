@@ -21,29 +21,23 @@ const NewTab = () => {
 
   useEffect(() => {
     navigator.serviceWorker.register(
-      new URL('./_workers/serviceWorker.ts', import.meta.url),
-      { scope: '/' }
+      new URL('./_workers/serviceWorker.ts', import.meta.url)
     );
 
-    embeddingToast.current = showToast({
-      message: 'Loading embeddings model',
-      type: 'info',
-      duration: -1,
-      progress: embeddingProgress,
-    });
-
-    generationToast.current = showToast({
-      message: 'Loading generation model',
-      type: 'info',
-      duration: -1,
-      progress: generationProgress,
-    });
-
-    showToast({
-      message: 'timed toast',
-      type: 'error',
-      duration: 5000,
-    });
+    if (embeddingProgress !== 100)
+      embeddingToast.current = showToast({
+        message: 'Loading embeddings model',
+        type: 'info',
+        duration: -1,
+        progress: embeddingProgress,
+      });
+    if (generationProgress !== 100)
+      generationToast.current = showToast({
+        message: 'Loading generation model',
+        type: 'info',
+        duration: -1,
+        progress: generationProgress,
+      });
   }, []);
 
   useEffect(() => {
