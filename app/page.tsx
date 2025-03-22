@@ -15,7 +15,7 @@ const NewTab = () => {
   const { addTab, selectedNode } = useNavigationStore();
   const { createFile } = useFilesQuery();
   const { showToast, updateToast } = useToast();
-  const { embeddingProgress, generationProgress } = useAi();
+  const { embeddingProgress, generationProgress, status } = useAi();
   const embeddingToast = useRef<string | null>(null);
   const generationToast = useRef<string | null>(null);
 

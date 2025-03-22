@@ -1,13 +1,19 @@
 // ai-worker.ts
 
 import {
+  AutoModelForCausalLM,
+  AutoTokenizer,
   FeatureExtractionPipeline,
   InterruptableStoppingCriteria,
-  TextGenerationPipeline,
+  PreTrainedModel,
+  PreTrainedTokenizer,
+  Tensor,
   TextStreamer,
   env,
   pipeline,
 } from '@huggingface/transformers';
+
+import { AiStatus } from '../_providers/AiProvider';
 
 // Configure Hugging Face environment
 env.allowRemoteModels = true;
@@ -24,9 +30,10 @@ type WorkerMessage = {
 
 // Model references
 let embedder: FeatureExtractionPipeline | null = null;
-let generator: TextGenerationPipeline | null = null;
+let generator: PreTrainedModel | null = null;
+let tokenizer: PreTrainedTokenizer | null = null;
 let streamer: TextStreamer | null = null;
-let stopper = new InterruptableStoppingCriteria();
+let stopping_criteria = new InterruptableStoppingCriteria();
 
 // Status tracking
 let embeddingProgress: number = 0;
@@ -61,25 +68,35 @@ async function initEmbedder(embeddingModel: string): Promise<{success: boolean, 
 // Initialize generation model
 async function initGenerator(generationModel: string): Promise<{success: boolean, error?: string}> {
   try {
-    generator = await pipeline(
-      'text-generation',
-      `generation/${generationModel}`,
-      {
-        // @ts-ignore
-        device: !!navigator.gpu ? 'webgpu' : 'wasm',
+    const model = `generation/${generationModel}`;
+
+    generator =  await AutoModelForCausalLM.from_pretrained(model, {
+        dtype: 'q4f16',
+        device: 'webgpu',
         progress_callback: (p: any) => {
           if (!isNaN(p.progress)) {
             generationProgress = p.progress;
             self.postMessage({ type: 'GENERATION_PROGRESS', progress: p.progress });
           }
         },
-      }
-    );
+    });
+
+    tokenizer = await AutoTokenizer.from_pretrained(model, {
+      legacy: true,
+      progress_callback: (p: any) => {
+        if (!isNaN(p.progress)) {
+          generationProgress = p.progress;
+          self.postMessage({ type: 'GENERATION_PROGRESS', progress: p.progress });
+        }
+      },
+    });
+
 
     // Create streamer with callbacks that post messages back to the main thread
-    streamer = new TextStreamer(generator.tokenizer, {
+    streamer = new TextStreamer(tokenizer, {
       skip_prompt: true,
-      callback_function: (text: string) => {
+      callback_function: (text: string) => {        
+        self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.GENERATING });
         self.postMessage({ type: 'STREAM_RESPONSE', text });
       },
       token_callback_function: () => {
@@ -116,10 +133,15 @@ async function getEmbeddings(input: string): Promise<{success: boolean, embeddin
 }
 
 // Generate answer with the model
-async function generateAnswer(prompt: string): Promise<{success: boolean, error?: string}> {
-  if (!generator || !streamer) {
+async function generateAnswer(messages: any[]): Promise<{success: boolean, error?: string}> {
+  if (!generator || !streamer || !tokenizer) {
     return { success: false, error: 'Generator not initialized' };
   }
+
+  const inputs = tokenizer.apply_chat_template(messages, {
+    add_generation_prompt: true,
+    return_dict: true,
+  });
 
   try {
     // Reset metrics
@@ -127,35 +149,28 @@ async function generateAnswer(prompt: string): Promise<{success: boolean, error?
     numTokens = 0;
     startTime = null;
     
-    self.postMessage({ type: 'STATUS_UPDATE', status: 'GENERATING' });
-
-    const result = await generator(prompt.trim(), {
-      max_new_tokens: 512,
-      temperature: 0.1,
-      do_sample: true,
-      top_p: 0.5,
-      repetition_penalty: 1.2,
-      return_full_text: false,
-      streamer: streamer,
+    const outputs = await generator.generate({
+       ...(inputs as any),
+        max_new_tokens: 512,
+        streamer,
+        stopping_criteria,
     });
 
-    const response = Array.isArray(result[0]) ? result[0][0] : result[0];
+    const response = tokenizer.batch_decode(outputs as any, { skip_special_tokens: true });
+
     if (!response) {
       throw new Error('No generation output received');
     }
 
     // Send completion message
     self.postMessage({
-      type: 'GENERATION_COMPLETE',
-      content: typeof response.generated_text === 'string'
-        ? response.generated_text
-        : response.generated_text.reduce((acc: string, message: any) => acc + message.content, '')
+      type: 'GENERATION_COMPLETE'
     });
 
-    self.postMessage({ type: 'STATUS_UPDATE', status: 'IDLE' });
+    self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.IDLE });
     return { success: true };
   } catch (error: any) {
-    self.postMessage({ type: 'STATUS_UPDATE', status: 'ERROR' });
+    self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.ERROR });
     self.postMessage({
       type: 'ERROR',
       error: error.message,
@@ -181,6 +196,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       
     case 'INIT_GENERATOR':
       const generatorResult = await initGenerator(payload.generationModel);
+
       self.postMessage({ 
         type: 'GENERATOR_INITIALIZED', 
         success: generatorResult.success,
@@ -199,12 +215,13 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       break;
       
     case 'GENERATE_ANSWER':
+      stopping_criteria.reset();
       await generateAnswer(payload.prompt);
       break;
       
     case 'STOP_GENERATION':
-      if (stopper) {
-        stopper.interrupt();
+      if (stopping_criteria) {
+        stopping_criteria.interrupt();
         self.postMessage({ type: 'GENERATION_STOPPED', id });
       }
       break;

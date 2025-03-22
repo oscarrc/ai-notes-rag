@@ -1,14 +1,17 @@
 'use client';
 
+import { useCallback, useEffect } from 'react';
+
 import { AiStatus } from '@/app/_providers/AiProvider';
 import ChatAnswer from './_components/ChatAnswer';
 import ChatInput from './_components/ChatInput';
 import ChatQuestion from './_components/ChatQuestion';
 import { useAi } from '@/app/_hooks/useAi';
-import { useCallback } from 'react';
+import { useToast } from '../_hooks/useToast';
 
 const ChatTab = () => {
-  const { conversation, status, generateAnswer, stopGeneration } = useAi();
+  const { conversation, status, generateAnswer, stopGeneration, tps } = useAi();
+  const { showToast } = useToast();
 
   const hasConversation = conversation.length > 0;
 
@@ -25,17 +28,23 @@ const ChatTab = () => {
     [generateAnswer]
   );
 
+  useEffect(() => {
+    if (status === AiStatus.IDLE && conversation.length > 0) {
+      showToast({
+        message: `Generation complete: ${tps.toFixed(2)} tokens per second`,
+        type: 'success',
+        duration: 5000,
+      });
+    }
+  }, [status]);
+
   return (
     <section className='flex flex-1 flex-col justify-end p-8'>
       <div
         className={`flex flex-1 flex-col items-center gap-8 ${status === AiStatus.LOADING || hasConversation ? 'justify-end' : 'justify-center'}`}
       >
-        {status === AiStatus.LOADING ||
-        status === AiStatus.GENERATING ||
-        hasConversation ? (
+        {hasConversation ? (
           conversation.map((h: HistoryMessage, i: number) => {
-            const isLatestMessage = i === conversation.length - 1;
-
             if (h.role === 'user')
               return <ChatQuestion key={`user-${i}`} text={h.content} />;
 
@@ -44,7 +53,10 @@ const ChatTab = () => {
                 <ChatAnswer
                   key={`assistant-${i}`}
                   text={h.content}
-                  isGenerating={status === AiStatus.GENERATING}
+                  isGenerating={
+                    status === AiStatus.GENERATING ||
+                    status === AiStatus.LOADING
+                  }
                   sources={h.sources || []}
                 />
               );

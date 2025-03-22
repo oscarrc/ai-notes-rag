@@ -10,7 +10,7 @@ interface ChatAnswerProps {
 }
 
 const ChatAnswer = ({ text, isGenerating, sources = [] }: ChatAnswerProps) => {
-  return (
+  return text.length ? (
     <div className='flex w-full max-w-2xl flex-col gap-4'>
       <div className='flex flex-col gap-4 rounded-box p-4'>
         <div className='prose'>{text}</div>
@@ -36,7 +36,7 @@ const ChatAnswer = ({ text, isGenerating, sources = [] }: ChatAnswerProps) => {
         </div>
       )}
     </div>
-  );
+  ) : null;
 };
 
 export default ChatAnswer;

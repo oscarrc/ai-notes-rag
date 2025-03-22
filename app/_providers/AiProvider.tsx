@@ -28,7 +28,7 @@ type PendingRequest = {
 };
 
 interface HistoryMessage {
-  role: 'user' | 'assistant';
+  role: 'user' | 'assistant' | 'system';
   content: string;
   sources?: {
     name: string;
@@ -60,6 +60,10 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const progress = useMemo((): number => {
     return (embeddingProgress + generationProgress) / 2;
   }, [embeddingProgress, generationProgress]);
+
+  useEffect(() => {
+    console.log(status);
+  }, [status]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -107,7 +111,8 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           break;
 
         case 'GENERATION_COMPLETE':
-          finalizeGeneration(data.content);
+          setStatus(AiStatus.IDLE);
+          // finalizeGeneration(data.content);
           break;
 
         case 'EMBEDDINGS_RESULT':
@@ -229,6 +234,14 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
+  const getNotes = useCallback(
+    async (query: string): Promise<EmbeddingRecord[]> => {
+      const embeddings = await getEmbeddings(query);
+      return fetchEmbeddings(embeddings);
+    },
+    [getEmbeddings, fetchEmbeddings]
+  );
+
   const saveEmbeddings = useCallback(
     async (data: EmbeddingRecord): Promise<void> => {
       try {
@@ -254,46 +267,40 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
-  const getPrompt = useCallback(
-    (notes: EmbeddingRecord[], question: string): string => {
-      if (!notes || notes.length === 0) {
-        return `<s>[INST] Answer this question: ${question}
+  // Create chat messages array for the model
+  const createChatMessages = useCallback(
+    (notes: EmbeddingRecord[], question: string): HistoryMessage[] => {
+      // System message with instructions
+      const systemMessage: HistoryMessage = {
+        role: 'system',
+        content: `You are a helpful AI assistant that answers questions based ONLY on the provided sources. 
+        If you can't find the answer in the sources, say "I don't have enough information to answer this question." 
+        Always include source references in your answers using square brackets like [filename].
+        At the end of your answer, list only the sources used to answer the query.`,
+      };
 
-I don't have any relevant documents to help answer this question. Please respond with:
-"I don't have enough information in my sources to answer this question." [/INST]</s>`;
-      }
+      // Context from the notes
+      const contextMessage: HistoryMessage = {
+        role: 'user',
+        content: notes
+          .map(
+            (note, index) =>
+              `Source ${index + 1}: ${note.path}
+          Title: ${note.name}
+          Content: ${note.content.trim()}`
+          )
+          .join('\n\n'),
+      };
 
-      const context = notes
-        .map((note) => {
-          return `Source: ${note.path}
-Title: ${note.name}
-Content: ${note.content.trim()}`;
-        })
-        .join('\n\n');
+      // User's question
+      const userMessage: HistoryMessage = {
+        role: 'user',
+        content: question,
+      };
 
-      // Format using a structure that works well with instruction-based LLama models
-      return `<s>[INST] 
-I'll provide you with some sources and a question. Please answer the question based ONLY on the provided sources.
-
-Question: ${question}
-
-Sources:
-${context}
-
-If you can't find the answer in the sources, just say "I don't have enough information to answer this question."
-
-Answer in a clear, concise way. If you use information from the sources, include the source IDs in your answer like this: [${notes[0]?.path}]. At the end of your answer, list all the sources you used in the format [source_1, source_2, etc.].
-[/INST]</s>`;
+      return [systemMessage, contextMessage, userMessage];
     },
     []
-  );
-
-  const getNotes = useCallback(
-    async (query: string): Promise<EmbeddingRecord[]> => {
-      const embeddings = await getEmbeddings(query);
-      return fetchEmbeddings(embeddings);
-    },
-    [getEmbeddings, fetchEmbeddings]
   );
 
   const streamResponse = useCallback((text: string) => {
@@ -365,8 +372,8 @@ Answer in a clear, concise way. If you use information from the sources, include
           return;
         }
 
-        const prompt = getPrompt(notes, question);
-        console.log(prompt);
+        // Create the chat messages array using the helper function
+        const chatMessages = createChatMessages(notes, question);
 
         setConversation((c) => {
           const newHistory = [...c];
@@ -386,7 +393,7 @@ Answer in a clear, concise way. If you use information from the sources, include
 
         workerRef.current.postMessage({
           type: 'GENERATE_ANSWER',
-          payload: { prompt },
+          payload: { prompt: chatMessages },
         });
       } catch (error) {
         console.error('Error during model execution:', error);
@@ -400,7 +407,7 @@ Answer in a clear, concise way. If you use information from the sources, include
         ]);
       }
     },
-    [getNotes, getPrompt, streamResponse]
+    [getNotes, createChatMessages, streamResponse]
   );
 
   return (
