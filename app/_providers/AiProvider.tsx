@@ -65,10 +65,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   }, [embeddingProgress, generationProgress]);
 
   useEffect(() => {
-    console.log(status);
-  }, [status]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const worker = new Worker(
@@ -267,19 +263,30 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
         return `<s>[INST] Answer this question: ${question}
 
 I don't have any relevant documents to help answer this question. Please respond with:
-"I don't have enough information in my sources to answer this question." [/INST]`;
+"I don't have enough information in my sources to answer this question." [/INST]</s>`;
       }
 
       const context = notes
         .map((note) => {
-          return `Id: ${note.path}:
+          return `Source: ${note.path}
 Title: ${note.name}
-Content: ${note.content.trim()}
----`;
+Content: ${note.content.trim()}`;
         })
         .join('\n\n');
 
-      return question;
+      // Format using a structure that works well with instruction-based LLama models
+      return `<s>[INST] 
+I'll provide you with some sources and a question. Please answer the question based ONLY on the provided sources.
+
+Question: ${question}
+
+Sources:
+${context}
+
+If you can't find the answer in the sources, just say "I don't have enough information to answer this question."
+
+Answer in a clear, concise way. If you use information from the sources, include the source IDs in your answer like this: [${notes[0]?.path}]. At the end of your answer, list all the sources you used in the format [source_1, source_2, etc.].
+[/INST]</s>`;
     },
     []
   );
@@ -357,6 +364,7 @@ Content: ${note.content.trim()}
         }
 
         const prompt = getPrompt(notes, question);
+        console.log(prompt);
 
         setConversation((c) => {
           const newHistory = [...c];
