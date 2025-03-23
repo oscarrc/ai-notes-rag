@@ -253,41 +253,32 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   // Create chat messages array for the model
   const createChatMessages = useCallback(
     (notes: EmbeddingRecord[], question: string): HistoryMessage[] => {
-      // More explicit system message with clearer instructions
+      // Instruction-based system message
       const systemMessage: HistoryMessage = {
         role: 'system',
-        content: `You are a knowledgeable AI assistant that helps users by answering questions based on their personal notes and documents.
-      
-INSTRUCTIONS:
-1. Answer ONLY based on the information in the provided sources.
-2. If the sources contain sufficient information to answer the question, provide a helpful, accurate response.
-3. If the sources don't contain information relevant to the question, respond ONLY with: "I don't have enough information in your notes to answer this question."
-4. DO NOT make up information or create fictional content if it's not in the sources.
-5. When using information from sources, cite them using this format: [document name: path]
-6. At the end of your response, list ONLY the sources you actually used in your answer.
-7. Keep your answers concise and directly relevant to the question.`,
+        content: `You are an AI assistant that helps answer questions based on the user's personal notes. 
+Follow these instructions carefully:
+1. Only use information found in the user's notes
+2. If the notes don't contain the answer, say "I don't have enough information in your notes to answer this question."
+3. Never make up information not present in the notes
+4. Provide a complete response based on one or more notes
+5. Do not provide a response that is not based on the notes`,
       };
 
-      // Format context from notes with clear boundaries
-      let contextContent = '';
+      // Format notes as simple context
+      const formattedNotes = notes
+        .map((note) => `NOTE - ${note.name}:\n${note.content.trim()}`)
+        .join('\n\n');
 
-      if (notes && notes.length > 0) {
-        contextContent = notes
-          .map(
-            (note, index) =>
-              `SOURCE ${index + 1}:
-        Name: ${note.name}
-        Path: ${note.path}
-        Content:
-        ${note.content.trim()}`
-          )
-          .join('\n\n---------\n\n');
-      }
-
-      // User message with very explicit formatting
+      // Structure as instruction + context + question
       const userMessage: HistoryMessage = {
         role: 'user',
-        content: `SOURCES:\n\n${contextContent}\n\n======\n\nQUESTION: ${question}\n\nPlease answer the question using only information from the sources above.`,
+        content: `INSTRUCTION: Answer my question using only information from my notes. If my notes don't contain the answer, tell me you don't have enough information.
+
+MY NOTES:
+${formattedNotes}
+
+MY QUESTION: ${question}`,
       };
 
       return [systemMessage, userMessage];
@@ -367,7 +358,7 @@ INSTRUCTIONS:
 
         // Create the chat messages array using the helper function
         const chatMessages = createChatMessages(notes, question);
-
+        console.log({ chatMessages });
         setConversation((c) => {
           const newHistory = [...c];
 

@@ -5,16 +5,22 @@ import ChatSource from './ChatSource';
 
 interface ChatAnswerProps {
   text: string;
+  isCurrent: boolean;
   isGenerating: boolean;
   sources?: FileNode[];
 }
 
-const ChatAnswer = ({ text, isGenerating, sources = [] }: ChatAnswerProps) => {
+const ChatAnswer = ({
+  text,
+  isCurrent,
+  isGenerating,
+  sources = [],
+}: ChatAnswerProps) => {
   return text.length ? (
     <div className='flex w-full max-w-2xl flex-col gap-4'>
       <div className='flex flex-col gap-4 rounded-box p-4'>
         <div className='prose'>{text}</div>
-        {!isGenerating && sources.length > 0 && (
+        {(!isGenerating || !isCurrent) && sources.length > 0 && (
           <div className='flex flex-1 flex-wrap justify-end gap-2'>
             {sources.map((source, index) => (
               <ChatSource key={`source-${index}`} source={source} />
@@ -22,7 +28,7 @@ const ChatAnswer = ({ text, isGenerating, sources = [] }: ChatAnswerProps) => {
           </div>
         )}
       </div>
-      {!isGenerating && (
+      {(!isGenerating || !isCurrent) && (
         <div className='flex w-full gap-2'>
           <ButtonSquare size='xs' className='opacity-75 hover:opacity-100'>
             <VscCopy className='h-4 w-4' />
