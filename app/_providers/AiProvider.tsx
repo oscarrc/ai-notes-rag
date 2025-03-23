@@ -48,10 +48,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   }, [embeddingProgress, generationProgress]);
 
   useEffect(() => {
-    console.log(status);
-  }, [status]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const worker = new Worker(
@@ -257,35 +253,44 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   // Create chat messages array for the model
   const createChatMessages = useCallback(
     (notes: EmbeddingRecord[], question: string): HistoryMessage[] => {
-      // System message with instructions
+      // More explicit system message with clearer instructions
       const systemMessage: HistoryMessage = {
         role: 'system',
-        content: `You are a helpful AI assistant that answers questions based ONLY on the provided sources. 
-        If you can't find the answer in the sources, say "I don't have enough information to answer this question." 
-        Always include source references in your answers using square brackets like [filename].
-        At the end of your answer, list only the sources used to answer the query.`,
+        content: `You are a knowledgeable AI assistant that helps users by answering questions based on their personal notes and documents.
+      
+INSTRUCTIONS:
+1. Answer ONLY based on the information in the provided sources.
+2. If the sources contain sufficient information to answer the question, provide a helpful, accurate response.
+3. If the sources don't contain information relevant to the question, respond ONLY with: "I don't have enough information in your notes to answer this question."
+4. DO NOT make up information or create fictional content if it's not in the sources.
+5. When using information from sources, cite them using this format: [document name: path]
+6. At the end of your response, list ONLY the sources you actually used in your answer.
+7. Keep your answers concise and directly relevant to the question.`,
       };
 
-      // Context from the notes
-      const contextMessage: HistoryMessage = {
-        role: 'user',
-        content: notes
+      // Format context from notes with clear boundaries
+      let contextContent = '';
+
+      if (notes && notes.length > 0) {
+        contextContent = notes
           .map(
             (note, index) =>
-              `Source ${index + 1}: ${note.path}
-          Title: ${note.name}
-          Content: ${note.content.trim()}`
+              `SOURCE ${index + 1}:
+        Name: ${note.name}
+        Path: ${note.path}
+        Content:
+        ${note.content.trim()}`
           )
-          .join('\n\n'),
-      };
+          .join('\n\n---------\n\n');
+      }
 
-      // User's question
+      // User message with very explicit formatting
       const userMessage: HistoryMessage = {
         role: 'user',
-        content: question,
+        content: `SOURCES:\n\n${contextContent}\n\n======\n\nQUESTION: ${question}\n\nPlease answer the question using only information from the sources above.`,
       };
 
-      return [systemMessage, contextMessage, userMessage];
+      return [systemMessage, userMessage];
     },
     []
   );
@@ -381,7 +386,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
 
         workerRef.current.postMessage({
           type: 'GENERATE_ANSWER',
-          payload: { prompt: chatMessages },
+          payload: { messages: chatMessages },
         });
       } catch (error) {
         console.error('Error during model execution:', error);

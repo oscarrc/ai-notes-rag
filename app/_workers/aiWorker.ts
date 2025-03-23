@@ -219,7 +219,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       
     case 'GENERATE_ANSWER':
       stopping_criteria.reset();
-      await generateAnswer(payload.prompt);
+      await generateAnswer(payload.messages);
       break;
       
     case 'STOP_GENERATION':
