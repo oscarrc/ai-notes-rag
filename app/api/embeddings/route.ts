@@ -44,9 +44,10 @@ export async function PUT(req: Request) {
     const results = await table
       .search(data)
       .distanceType("cosine")
+      .distanceRange(0, 0.6)
       .limit(5)
       .toArray();
-    
+
     return NextResponse.json(results);
   } catch (error) {
     console.log("Error in vector search:", error);

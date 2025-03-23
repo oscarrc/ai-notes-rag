@@ -43,9 +43,17 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [conversation, setConversation] = useState<HistoryMessage[]>([]);
 
+  const regeneratingIndex = useRef<number | null>(null);
+
   const progress = useMemo((): number => {
     return (embeddingProgress + generationProgress) / 2;
   }, [embeddingProgress, generationProgress]);
+
+  useEffect(() => {
+    if (status === AiStatus.IDLE && regeneratingIndex.current !== null) {
+      regeneratingIndex.current = null;
+    }
+  }, [status]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -95,7 +103,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
 
         case 'GENERATION_COMPLETE':
           setStatus(AiStatus.IDLE);
-          // finalizeGeneration(data.content);
+          regeneratingIndex.current = null;
           break;
 
         case 'EMBEDDINGS_RESULT':
@@ -287,43 +295,65 @@ MY QUESTION: ${question}`,
   );
 
   const streamResponse = useCallback((text: string) => {
+    setStatus(AiStatus.GENERATING);
+
     setConversation((c) => {
       const newHistory = [...c];
 
+      // Determine which message to update
+      const targetIndex =
+        regeneratingIndex.current !== null
+          ? regeneratingIndex.current
+          : newHistory.length - 1;
+
+      console.log(
+        'Target index:',
+        targetIndex,
+        'Regenerating index:',
+        regeneratingIndex.current
+      );
+
+      // Ensure there's a message to update at the target index
       if (
-        newHistory.length > 0 &&
-        newHistory[newHistory.length - 1].role === 'assistant'
+        targetIndex >= 0 &&
+        targetIndex < newHistory.length &&
+        newHistory[targetIndex].role === 'assistant'
       ) {
-        newHistory[newHistory.length - 1] = {
-          role: 'assistant',
-          content: newHistory[newHistory.length - 1].content + text,
-          sources: newHistory[newHistory.length - 1].sources,
-        };
+        const targetMessage = newHistory[targetIndex];
+
+        if (typeof targetMessage.content === 'string') {
+          // Simple case - append to the existing string
+          newHistory[targetIndex] = {
+            ...targetMessage,
+            content: targetMessage.content + text,
+          };
+        } else if (Array.isArray(targetMessage.content)) {
+          // We're dealing with an array of responses
+          const contentArray = [...targetMessage.content];
+
+          // Check if the last item is our streaming placeholder (empty string)
+          if (
+            contentArray.length > 0 &&
+            contentArray[contentArray.length - 1] === ''
+          ) {
+            // Replace the empty placeholder with the first token
+            contentArray[contentArray.length - 1] = text;
+          } else {
+            // Continue appending to the last element
+            const lastIndex = contentArray.length - 1;
+            contentArray[lastIndex] = contentArray[lastIndex] + text;
+          }
+
+          newHistory[targetIndex] = {
+            ...targetMessage,
+            content: contentArray,
+          };
+        }
       } else {
         newHistory.push({
           role: 'assistant',
           content: text,
         });
-      }
-
-      return newHistory;
-    });
-  }, []);
-
-  const finalizeGeneration = useCallback((content: string) => {
-    setConversation((c) => {
-      const newHistory = [...c];
-
-      if (
-        newHistory.length > 0 &&
-        newHistory[newHistory.length - 1].role === 'assistant'
-      ) {
-        const sources = newHistory[newHistory.length - 1].sources;
-        newHistory[newHistory.length - 1] = {
-          role: 'assistant',
-          content,
-          sources,
-        };
       }
 
       return newHistory;
@@ -338,6 +368,8 @@ MY QUESTION: ${question}`,
   const generateAnswer = useCallback(
     async (question: string) => {
       if (!workerRef.current) return;
+
+      regeneratingIndex.current = null;
 
       setConversation((c) => [...c, { role: 'user', content: question }]);
       setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
@@ -394,6 +426,133 @@ MY QUESTION: ${question}`,
     [getNotes, createChatMessages, streamResponse]
   );
 
+  // Modified regenerateAnswer function
+  const regenerateAnswer = useCallback(
+    async (messageIndex: number) => {
+      if (
+        !workerRef.current ||
+        messageIndex < 0 ||
+        messageIndex >= conversation.length
+      )
+        return;
+
+      // Find the corresponding user question before this answer
+      let userQuestion = '';
+
+      regeneratingIndex.current = messageIndex;
+
+      for (let i = messageIndex - 1; i >= 0; i--) {
+        if (conversation[i].role === 'user') {
+          userQuestion = conversation[i].content as string;
+          break;
+        }
+      }
+
+      if (!userQuestion) return;
+
+      setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
+      setStatus(AiStatus.LOADING);
+
+      try {
+        const notes = await getNotes(userQuestion);
+
+        // Store current message info for regeneration before modifying
+        const currentAssistantMessage = conversation[messageIndex];
+        const currentContent = currentAssistantMessage.content;
+
+        if (notes.length === 0) {
+          setStatus(AiStatus.GENERATING);
+
+          // Prepare a new answer array without empty strings
+          const newContent =
+            typeof currentContent === 'string'
+              ? [
+                  currentContent,
+                  "I don't have enough information in my sources to answer this question.",
+                ]
+              : [
+                  ...currentContent,
+                  "I don't have enough information in my sources to answer this question.",
+                ];
+
+          // Update conversation with the complete answer
+          setConversation((c) => {
+            const newHistory = [...c];
+            newHistory[messageIndex] = {
+              ...newHistory[messageIndex],
+              content: newContent,
+            };
+            return newHistory;
+          });
+
+          setStatus(AiStatus.IDLE);
+          regeneratingIndex.current = null;
+          return;
+        }
+
+        // Create the chat messages array using the helper function
+        const chatMessages = createChatMessages(notes, userQuestion);
+
+        // Prepare the conversation for receiving a new answer
+        setConversation((c) => {
+          const newHistory = [...c];
+          const assistantMessage = newHistory[messageIndex];
+
+          // Prepare for streaming - convert to array if needed and add empty string placeholder
+          let newContent;
+          if (typeof assistantMessage.content === 'string') {
+            // First regeneration: convert string to array with original content and add placeholder
+            newContent = [assistantMessage.content, ''];
+          } else if (Array.isArray(assistantMessage.content)) {
+            // Already an array, just add a placeholder
+            newContent = [...assistantMessage.content, ''];
+          }
+
+          newHistory[messageIndex] = {
+            ...assistantMessage,
+            content: newContent || '',
+            sources: notes.map((n) => ({
+              name: n.name,
+              path: n.path,
+              extension: n.path.split('.').pop(),
+            })),
+          };
+
+          return newHistory;
+        });
+
+        // Start the generation process
+        workerRef.current.postMessage({
+          type: 'GENERATE_ANSWER',
+          payload: { messages: chatMessages },
+        });
+      } catch (error) {
+        console.error('Error during model execution:', error);
+        setStatus(AiStatus.ERROR);
+
+        // Add error message
+        setConversation((c) => {
+          const newHistory = [...c];
+          const assistantMessage = newHistory[messageIndex];
+
+          const errorMsg =
+            'Sorry, I encountered an error while generating a response. Please try again.';
+
+          if (typeof assistantMessage.content === 'string') {
+            assistantMessage.content = [assistantMessage.content, errorMsg];
+          } else if (Array.isArray(assistantMessage.content)) {
+            assistantMessage.content = [...assistantMessage.content, errorMsg];
+          }
+
+          return newHistory;
+        });
+
+        regeneratingIndex.current = null;
+      }
+    },
+    [conversation, getNotes, createChatMessages]
+  );
+
   return (
     <AiContext.Provider
       value={{
@@ -407,12 +566,14 @@ MY QUESTION: ${question}`,
         generationProgress,
         setGenerationModel,
         generateAnswer,
+        regenerateAnswer,
         getNotes,
         conversation,
         status,
         stopGeneration,
         progress,
         performance,
+        regeneratingIndex: regeneratingIndex.current,
       }}
     >
       {children}
