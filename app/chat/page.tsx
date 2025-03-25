@@ -74,7 +74,7 @@ const ChatTab = () => {
         isGenerating={
           status === AiStatus.GENERATING || status === AiStatus.LOADING
         }
-        className='z-5 sticky bottom-0 min-h-32 self-center'
+        className='sticky bottom-0 z-50 min-h-32 self-center'
       />
 
       {/* Messages container - visually above the input due to flex-col-reverse */}
