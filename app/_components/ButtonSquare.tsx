@@ -4,6 +4,7 @@ interface ButtonSquareProps {
   className?: string;
   size?: 'lg' | 'md' | 'sm' | 'xs';
   tip?: string;
+  disabled?: boolean;
 }
 
 const ButtonSquare = ({
@@ -12,6 +13,7 @@ const ButtonSquare = ({
   size = 'md',
   children,
   tip,
+  disabled,
 }: ButtonSquareProps) => {
   const sizes: Record<string, string> = {
     lg: 'btn-lg',
@@ -24,6 +26,7 @@ const ButtonSquare = ({
     <button
       className={`btn btn-square btn-ghost ${sizes[size]} ${className}`}
       onClick={onClick}
+      disabled={disabled}
       {...(className?.includes('tooltip') && tip ? { 'data-tip': tip } : '')}
     >
       {children}

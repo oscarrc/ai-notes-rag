@@ -38,6 +38,10 @@ const getUniqueName = (
   baseName: string,
   extension?: string
 ): string => {
+  if(!fs.existsSync(dir)){
+    return extension ? `${baseName}${extension}` : baseName;
+  }
+
   const files = new Set(fs.readdirSync(dir));
 
   if (!files.has(extension ? `${baseName}${extension}` : baseName)) {
@@ -68,14 +72,19 @@ export const createFile = (baseDir: string, item: FileNode): FileNode => {
   const newPath = path.join(targetDir, uniqueName);
 
   if (item?.extension) {
-    fs.writeFileSync(newPath, '');
+    // If target do note exist, create it
+    if (!fs.existsSync(targetDir)){
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+    
+    fs.writeFileSync(newPath, item?.content || '', 'utf-8');
     return {
       name: path.basename(uniqueName, item.extension),
       path: `${item.path}/${uniqueName}`,
       extension: item.extension,
     };
   } else {
-    fs.mkdirSync(newPath);
+    fs.mkdirSync(newPath, { recursive: true });   
     return {
       name: uniqueName,
       path: `${item.path}/${uniqueName}`,

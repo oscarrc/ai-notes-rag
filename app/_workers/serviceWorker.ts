@@ -19,14 +19,11 @@ const MODEL_FILE_EXTENSIONS = [
 
 // Setting up event listeners
 self.addEventListener('install', (event: ExtendableEvent) => {
-  console.log('[Model Cache] Service Worker installing');
   // Skip waiting to ensure the new service worker activates immediately
   event.waitUntil(self.skipWaiting());
 });
 
-self.addEventListener('activate', (event: ExtendableEvent) => {
-  console.log('[Model Cache] Service Worker activated');
-  
+self.addEventListener('activate', (event: ExtendableEvent) => { 
   // Clean up old caches
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -65,15 +62,12 @@ async function networkFirst(request: Request): Promise<Response> {
     // Cache the response for future use
     const cache = await caches.open(CACHE_NAME);
     // Clone the response because it's a stream that can only be consumed once
-    cache.put(request, networkResponse.clone());
-    
-    console.log(`[Model Cache] Cached model file: ${request.url}`);
+    cache.put(request, networkResponse.clone());    
     return networkResponse;
   } catch (error) {
     // If network fails, try to get from cache
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-      console.log(`[Model Cache] Serving from cache: ${request.url}`);
       return cachedResponse;
     }
     
@@ -86,7 +80,6 @@ async function cacheFirst(request: Request): Promise<Response> {
   // Try to get from cache first
   const cachedResponse = await caches.match(request);
   if (cachedResponse) {
-    console.log(`[Model Cache] Serving from cache: ${request.url}`);
     return cachedResponse;
   }
   
@@ -98,7 +91,6 @@ async function cacheFirst(request: Request): Promise<Response> {
   // Clone the response because it's a stream that can only be consumed once
   cache.put(request, networkResponse.clone());
   
-  console.log(`[Model Cache] Cached model file: ${request.url}`);
   return networkResponse;
 }
 
@@ -107,9 +99,7 @@ self.addEventListener('fetch', (event: FetchEvent) => {
   const request = event.request;
   
   // Check if this is a model file request
-  if (isModelFile(request.url)) {
-    console.log(`[Model Cache] Intercepted model file request: ${request.url}`);
-    
+  if (isModelFile(request.url)) {    
     // Use cache-first strategy for model files
     event.respondWith(cacheFirst(request));
   }
@@ -139,7 +129,6 @@ self.addEventListener('message', (event: MessageEvent) => {
             .then(response => {
               if (response.ok) {
                 cache.put(url, response);
-                console.log(`[Model Cache] Pre-cached: ${url}`);
               } else {
                 console.error(`[Model Cache] Failed to pre-cache: ${url}`);
               }
@@ -151,9 +140,7 @@ self.addEventListener('message', (event: MessageEvent) => {
       );
     });
   } else if (type === 'CLEAR_MODEL_CACHE') {
-    caches.delete(CACHE_NAME).then(() => {
-      console.log('[Model Cache] Cache cleared');
-    });
+    caches.delete(CACHE_NAME);
   }
 });
 
