@@ -1,5 +1,6 @@
 'use client';
 
+import { ReactNode, useEffect } from 'react';
 import {
   VscClose,
   VscError,
@@ -8,12 +9,11 @@ import {
   VscWarning,
 } from 'react-icons/vsc';
 
-import { useEffect } from 'react';
 import { useToast } from '@/app/_hooks/useToast';
 
 interface ToastProps {
   id: string;
-  message: string;
+  message: string | ReactNode;
   type: ToastType;
   progress?: number;
 }
@@ -56,7 +56,9 @@ const Toast = ({ id, message, type, progress }: ToastProps) => {
         {icons[type]}
         <div className='flex flex-col gap-2'>
           <div className='flex items-center space-x-3'>
-            <p className='w-64 truncate text-sm font-medium'>{message}</p>
+            <p className='w-64 truncate whitespace-pre-wrap text-sm font-medium'>
+              {message}
+            </p>
           </div>
           {progress !== undefined && (
             <progress

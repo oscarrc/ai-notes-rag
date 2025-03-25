@@ -1,6 +1,5 @@
 'use client';
 
-import { InterruptableStoppingCriteria, env } from '@huggingface/transformers';
 import {
   createContext,
   useCallback,
@@ -10,6 +9,11 @@ import {
   useState,
 } from 'react';
 
+export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
+export const GENERATION_MODELS = ['Llama-3.2-1B-Instruct-q4f16'];
+
+export const AiContext = createContext<any>(null);
+
 export enum AiStatus {
   IDLE = 'idle',
   GENERATING = 'generating',
@@ -18,51 +22,38 @@ export enum AiStatus {
   ERROR = 'error',
 }
 
-export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
-export const GENERATION_MODELS = ['Llama-3.2-1B-Instruct-q4f16'];
-
-export const AiContext = createContext<any>(null);
-
 type PendingRequest = {
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
 };
-
-interface HistoryMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  sources?: {
-    name: string;
-    path: string;
-    extension?: string;
-  }[];
-}
-
-type Embedding = number[];
-
-interface EmbeddingRecord {
-  path: string;
-  name: string;
-  content: string;
-}
 
 export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const workerRef = useRef<Worker | null>(null);
   const pendingRequests = useRef<Map<string, PendingRequest>>(new Map());
 
   const [status, setStatus] = useState<AiStatus>(AiStatus.IDLE);
-  const [tps, setTps] = useState(0);
+  const [performance, setPerformance] = useState<AiPerformance>({
+    tps: 0,
+    numTokens: 0,
+    totalTime: 0,
+  });
   const [embeddingModel, setEmbeddingModel] = useState(EMBEDDING_MODELS[0]);
   const [embeddingProgress, setEmbeddingProgress] = useState(0);
   const [generationModel, setGenerationModel] = useState(GENERATION_MODELS[0]);
   const [generationProgress, setGenerationProgress] = useState(0);
   const [conversation, setConversation] = useState<HistoryMessage[]>([]);
 
-  const stopper = useRef(new InterruptableStoppingCriteria());
+  const regeneratingIndex = useRef<number | null>(null);
 
   const progress = useMemo((): number => {
     return (embeddingProgress + generationProgress) / 2;
   }, [embeddingProgress, generationProgress]);
+
+  useEffect(() => {
+    if (status === AiStatus.IDLE && regeneratingIndex.current !== null) {
+      regeneratingIndex.current = null;
+    }
+  }, [status]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -106,11 +97,13 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           break;
 
         case 'PERFORMANCE_UPDATE':
-          setTps(data.tps);
+          const { tps, numTokens, totalTime } = data;
+          setPerformance({ tps, numTokens, totalTime });
           break;
 
         case 'GENERATION_COMPLETE':
-          finalizeGeneration(data.content);
+          setStatus(AiStatus.IDLE);
+          regeneratingIndex.current = null;
           break;
 
         case 'EMBEDDINGS_RESULT':
@@ -232,6 +225,14 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
+  const getNotes = useCallback(
+    async (query: string): Promise<EmbeddingRecord[]> => {
+      const embeddings = await getEmbeddings(query);
+      return fetchEmbeddings(embeddings);
+    },
+    [getEmbeddings, fetchEmbeddings]
+  );
+
   const saveEmbeddings = useCallback(
     async (data: EmbeddingRecord): Promise<void> => {
       try {
@@ -257,60 +258,97 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
-  const getPrompt = useCallback(
-    (notes: EmbeddingRecord[], question: string): string => {
-      if (!notes || notes.length === 0) {
-        return `<s>[INST] Answer this question: ${question}
+  // Create chat messages array for the model
+  const createChatMessages = useCallback(
+    (notes: EmbeddingRecord[], question: string): HistoryMessage[] => {
+      // Instruction-based system message
+      const systemMessage: HistoryMessage = {
+        role: 'system',
+        content: `You are an AI assistant that helps answer questions based on the user's personal notes. 
+Follow these instructions carefully:
+1. Only use information found in the user's notes
+2. If the notes don't contain the answer, say "I don't have enough information in your notes to answer this question."
+3. Never make up information not present in the notes
+4. Provide a complete response based on one or more notes
+5. Do not provide a response that is not based on the notes`,
+      };
 
-I don't have any relevant documents to help answer this question. Please respond with:
-"I don't have enough information in my sources to answer this question." [/INST]</s>`;
-      }
-
-      const context = notes
-        .map((note) => {
-          return `Source: ${note.path}
-Title: ${note.name}
-Content: ${note.content.trim()}`;
-        })
+      // Format notes as simple context
+      const formattedNotes = notes
+        .map((note) => `NOTE - ${note.name}:\n${note.content.trim()}`)
         .join('\n\n');
 
-      // Format using a structure that works well with instruction-based LLama models
-      return `<s>[INST] 
-I'll provide you with some sources and a question. Please answer the question based ONLY on the provided sources.
+      // Structure as instruction + context + question
+      const userMessage: HistoryMessage = {
+        role: 'user',
+        content: `INSTRUCTION: Answer my question using only information from my notes. If my notes don't contain the answer, tell me you don't have enough information.
 
-Question: ${question}
+MY NOTES:
+${formattedNotes}
 
-Sources:
-${context}
+MY QUESTION: ${question}`,
+      };
 
-If you can't find the answer in the sources, just say "I don't have enough information to answer this question."
-
-Answer in a clear, concise way. If you use information from the sources, include the source IDs in your answer like this: [${notes[0]?.path}]. At the end of your answer, list all the sources you used in the format [source_1, source_2, etc.].
-[/INST]</s>`;
+      return [systemMessage, userMessage];
     },
     []
   );
 
-  const getNotes = useCallback(
-    async (query: string): Promise<EmbeddingRecord[]> => {
-      const embeddings = await getEmbeddings(query);
-      return fetchEmbeddings(embeddings);
-    },
-    [getEmbeddings, fetchEmbeddings]
-  );
-
   const streamResponse = useCallback((text: string) => {
+    setStatus(AiStatus.GENERATING);
+
     setConversation((c) => {
       const newHistory = [...c];
 
+      // Determine which message to update
+      const targetIndex =
+        regeneratingIndex.current !== null
+          ? regeneratingIndex.current
+          : newHistory.length - 1;
+
+      console.log(
+        'Target index:',
+        targetIndex,
+        'Regenerating index:',
+        regeneratingIndex.current
+      );
+
+      // Ensure there's a message to update at the target index
       if (
-        newHistory.length > 0 &&
-        newHistory[newHistory.length - 1].role === 'assistant'
+        targetIndex >= 0 &&
+        targetIndex < newHistory.length &&
+        newHistory[targetIndex].role === 'assistant'
       ) {
-        newHistory[newHistory.length - 1] = {
-          role: 'assistant',
-          content: newHistory[newHistory.length - 1].content + text,
-        };
+        const targetMessage = newHistory[targetIndex];
+
+        if (typeof targetMessage.content === 'string') {
+          // Simple case - append to the existing string
+          newHistory[targetIndex] = {
+            ...targetMessage,
+            content: targetMessage.content + text,
+          };
+        } else if (Array.isArray(targetMessage.content)) {
+          // We're dealing with an array of responses
+          const contentArray = [...targetMessage.content];
+
+          // Check if the last item is our streaming placeholder (empty string)
+          if (
+            contentArray.length > 0 &&
+            contentArray[contentArray.length - 1] === ''
+          ) {
+            // Replace the empty placeholder with the first token
+            contentArray[contentArray.length - 1] = text;
+          } else {
+            // Continue appending to the last element
+            const lastIndex = contentArray.length - 1;
+            contentArray[lastIndex] = contentArray[lastIndex] + text;
+          }
+
+          newHistory[targetIndex] = {
+            ...targetMessage,
+            content: contentArray,
+          };
+        }
       } else {
         newHistory.push({
           role: 'assistant',
@@ -322,32 +360,19 @@ Answer in a clear, concise way. If you use information from the sources, include
     });
   }, []);
 
-  const finalizeGeneration = useCallback((content: string) => {
-    setConversation((c) => {
-      const newHistory = [...c];
-
-      if (
-        newHistory.length > 0 &&
-        newHistory[newHistory.length - 1].role === 'assistant'
-      ) {
-        const sources = newHistory[newHistory.length - 1].sources;
-        newHistory[newHistory.length - 1] = {
-          role: 'assistant',
-          content,
-          sources,
-        };
-      }
-
-      return newHistory;
-    });
-  }, []);
+  const stopGeneration = () => {
+    if (!workerRef.current) return;
+    workerRef.current.postMessage({ type: 'STOP_GENERATION' });
+  };
 
   const generateAnswer = useCallback(
     async (question: string) => {
       if (!workerRef.current) return;
 
+      regeneratingIndex.current = null;
+
       setConversation((c) => [...c, { role: 'user', content: question }]);
-      setTps(0);
+      setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
 
       try {
         setStatus(AiStatus.LOADING);
@@ -363,9 +388,9 @@ Answer in a clear, concise way. If you use information from the sources, include
           return;
         }
 
-        const prompt = getPrompt(notes, question);
-        console.log(prompt);
-
+        // Create the chat messages array using the helper function
+        const chatMessages = createChatMessages(notes, question);
+        console.log({ chatMessages });
         setConversation((c) => {
           const newHistory = [...c];
 
@@ -384,7 +409,7 @@ Answer in a clear, concise way. If you use information from the sources, include
 
         workerRef.current.postMessage({
           type: 'GENERATE_ANSWER',
-          payload: { prompt },
+          payload: { messages: chatMessages },
         });
       } catch (error) {
         console.error('Error during model execution:', error);
@@ -398,7 +423,134 @@ Answer in a clear, concise way. If you use information from the sources, include
         ]);
       }
     },
-    [getNotes, getPrompt, streamResponse]
+    [getNotes, createChatMessages, streamResponse]
+  );
+
+  // Modified regenerateAnswer function
+  const regenerateAnswer = useCallback(
+    async (messageIndex: number) => {
+      if (
+        !workerRef.current ||
+        messageIndex < 0 ||
+        messageIndex >= conversation.length
+      )
+        return;
+
+      // Find the corresponding user question before this answer
+      let userQuestion = '';
+
+      regeneratingIndex.current = messageIndex;
+
+      for (let i = messageIndex - 1; i >= 0; i--) {
+        if (conversation[i].role === 'user') {
+          userQuestion = conversation[i].content as string;
+          break;
+        }
+      }
+
+      if (!userQuestion) return;
+
+      setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
+      setStatus(AiStatus.LOADING);
+
+      try {
+        const notes = await getNotes(userQuestion);
+
+        // Store current message info for regeneration before modifying
+        const currentAssistantMessage = conversation[messageIndex];
+        const currentContent = currentAssistantMessage.content;
+
+        if (notes.length === 0) {
+          setStatus(AiStatus.GENERATING);
+
+          // Prepare a new answer array without empty strings
+          const newContent =
+            typeof currentContent === 'string'
+              ? [
+                  currentContent,
+                  "I don't have enough information in my sources to answer this question.",
+                ]
+              : [
+                  ...currentContent,
+                  "I don't have enough information in my sources to answer this question.",
+                ];
+
+          // Update conversation with the complete answer
+          setConversation((c) => {
+            const newHistory = [...c];
+            newHistory[messageIndex] = {
+              ...newHistory[messageIndex],
+              content: newContent,
+            };
+            return newHistory;
+          });
+
+          setStatus(AiStatus.IDLE);
+          regeneratingIndex.current = null;
+          return;
+        }
+
+        // Create the chat messages array using the helper function
+        const chatMessages = createChatMessages(notes, userQuestion);
+
+        // Prepare the conversation for receiving a new answer
+        setConversation((c) => {
+          const newHistory = [...c];
+          const assistantMessage = newHistory[messageIndex];
+
+          // Prepare for streaming - convert to array if needed and add empty string placeholder
+          let newContent;
+          if (typeof assistantMessage.content === 'string') {
+            // First regeneration: convert string to array with original content and add placeholder
+            newContent = [assistantMessage.content, ''];
+          } else if (Array.isArray(assistantMessage.content)) {
+            // Already an array, just add a placeholder
+            newContent = [...assistantMessage.content, ''];
+          }
+
+          newHistory[messageIndex] = {
+            ...assistantMessage,
+            content: newContent || '',
+            sources: notes.map((n) => ({
+              name: n.name,
+              path: n.path,
+              extension: n.path.split('.').pop(),
+            })),
+          };
+
+          return newHistory;
+        });
+
+        // Start the generation process
+        workerRef.current.postMessage({
+          type: 'GENERATE_ANSWER',
+          payload: { messages: chatMessages },
+        });
+      } catch (error) {
+        console.error('Error during model execution:', error);
+        setStatus(AiStatus.ERROR);
+
+        // Add error message
+        setConversation((c) => {
+          const newHistory = [...c];
+          const assistantMessage = newHistory[messageIndex];
+
+          const errorMsg =
+            'Sorry, I encountered an error while generating a response. Please try again.';
+
+          if (typeof assistantMessage.content === 'string') {
+            assistantMessage.content = [assistantMessage.content, errorMsg];
+          } else if (Array.isArray(assistantMessage.content)) {
+            assistantMessage.content = [...assistantMessage.content, errorMsg];
+          }
+
+          return newHistory;
+        });
+
+        regeneratingIndex.current = null;
+      }
+    },
+    [conversation, getNotes, createChatMessages]
   );
 
   return (
@@ -414,12 +566,14 @@ Answer in a clear, concise way. If you use information from the sources, include
         generationProgress,
         setGenerationModel,
         generateAnswer,
+        regenerateAnswer,
         getNotes,
         conversation,
         status,
-        stopper,
+        stopGeneration,
         progress,
-        tps,
+        performance,
+        regeneratingIndex: regeneratingIndex.current,
       }}
     >
       {children}

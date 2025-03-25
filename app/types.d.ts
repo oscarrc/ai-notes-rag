@@ -28,7 +28,7 @@ interface EmbeddingRecord {
 
 interface HistoryMessage {
   role: 'user' | 'assistant' | 'system' | 'context';
-  content: string;
+  content: string | string[];
   sources?: FileNode[];
 }
 
@@ -36,13 +36,27 @@ type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface Toast {
   id: string;
-  message: string;
+  message: string | React.ReactNode;
   type: ToastType;
   duration?: number;
   progress?: number;
 }
 
+interface AiPerformance {
+  tps: number;
+  numTokens: number;
+  totalTime: number;
+}
+
 enum FileType {
   FILE = 'file',
   DIR = 'dir',
+}
+
+enum AiStatus {
+  IDLE = 'idle',
+  GENERATING = 'generating',
+  LOADING = 'loading',
+  READY = 'ready',
+  ERROR = 'error',
 }
