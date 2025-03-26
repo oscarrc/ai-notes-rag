@@ -1,5 +1,17 @@
 const VAULT_PATH = process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
 
+// Sort function that puts folders first, then files, both in alphabetical order
+export const sortFileNodes = (files: FileNode[]): FileNode[] => {
+  return [...files].sort((a, b) => {
+    // If both are folders or both are files, sort alphabetically
+    if ((a.children && b.children) || (!a.children && !b.children)) {
+      return a.name.localeCompare(b.name);
+    }
+    // Put folders before files
+    return a.children ? -1 : 1;
+  });
+};
+
 export const insertFile = (
   files: FileNode[],
   newFile: FileNode
@@ -8,7 +20,7 @@ export const insertFile = (
 
   // If the parent is "/vault", insert at the root level
   if (parentPath === VAULT_PATH) {
-    return [...files, newFile];
+    return sortFileNodes([...files, newFile]);
   }
 
   const insertRecursively = (nodes: FileNode[]): FileNode[] => {
@@ -16,7 +28,7 @@ export const insertFile = (
       if (!node.children) return node;
 
       if (node.path === parentPath) {
-        return { ...node, children: [...node.children, newFile] };
+        return { ...node, children: sortFileNodes([...node.children, newFile]) };
       }
 
       return { ...node, children: insertRecursively(node.children) };
