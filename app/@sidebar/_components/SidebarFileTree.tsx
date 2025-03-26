@@ -1,6 +1,7 @@
 'use client';
 
 import useNavigationStore from '@/app/_store/navigationStore';
+import { sortFileNodes } from '@/app/_utils/files';
 import { useState } from 'react';
 import { VscFolder, VscFolderOpened, VscFile } from 'react-icons/vsc';
 
@@ -36,7 +37,10 @@ const SidebarFileTree = ({ files }: SidebarFileTreeProps) => {
   };
 
   const renderTree = (nodes: FileNode[]) => {
-    return nodes?.map((node, index) => {
+    // Sort nodes so folders come first, then files, both in alphabetical order
+    const sortedNodes = sortFileNodes(nodes || []);
+    
+    return sortedNodes.map((node, index) => {
       if (node?.children) {
         const isOpen = openFolders[node.path];
         return (
