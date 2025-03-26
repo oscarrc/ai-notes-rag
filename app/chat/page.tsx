@@ -1,7 +1,6 @@
-// ChatTab.tsx
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { AiStatus } from '@/app/_providers/AiProvider';
 import ChatAnswer from './_components/ChatAnswer';
@@ -47,8 +46,15 @@ const ChatTab = () => {
     [status, regenerateAnswer]
   );
 
+  const lastReportedPerformance = useRef({ numTokens: 0, totalTime: 0 });
+
   useEffect(() => {
-    if (status === AiStatus.IDLE && conversation.length > 0) {
+    if (
+      status === AiStatus.IDLE &&
+      performance.numTokens > 0 &&
+      (performance.numTokens !== lastReportedPerformance.current.numTokens ||
+        performance.totalTime !== lastReportedPerformance.current.totalTime)
+    ) {
       showToast({
         message: (
           <>
@@ -60,14 +66,18 @@ const ChatTab = () => {
         type: 'success',
         duration: 5000,
       });
+
+      lastReportedPerformance.current = {
+        numTokens: performance.numTokens,
+        totalTime: performance.totalTime,
+      };
     }
-  }, [status]);
+  }, [status, performance]);
 
   return (
     <section
       className={`flex flex-1 flex-col-reverse overflow-y-auto p-8 ${status === AiStatus.LOADING || hasConversation ? 'justify-start' : 'justify-center'}`}
     >
-      {/* ChatInput at the bottom visually, but at the start of the flex container */}
       <ChatInput
         onSubmit={handleSubmit}
         onStop={stopGeneration}
@@ -77,16 +87,13 @@ const ChatTab = () => {
         className='sticky bottom-0 z-50 min-h-32 self-center'
       />
 
-      {/* Messages container - visually above the input due to flex-col-reverse */}
       <div className='z-0 mb-8 flex flex-col items-center gap-8'>
-        {/* Empty state message */}
         {!hasConversation && (
           <h2 className='px-4 text-center text-4xl font-bold'>
             Ask any question about your notes
           </h2>
         )}
 
-        {/* Conversation messages in normal order now */}
         {hasConversation &&
           conversation.map((h: HistoryMessage, i: number) => {
             if (h.role === 'user')
