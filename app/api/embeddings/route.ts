@@ -1,4 +1,4 @@
-import { connectDB, getTable } from './helper';
+import { connectDB, getTable, buildGraphData } from './helper';
 import { extractFilePaths, fetchFiles, getFile } from '../files/helper';
 
 import { NextResponse } from 'next/server';
@@ -7,14 +7,20 @@ const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
 const VAULT_PATH = process.env.NEXT_PUBLIC_VAULT_PATH || 'vault';
 const BASE_PATH = `/${DATA_PATH}/${VAULT_PATH}/`.replace('//', '');
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const threshold = parseFloat(searchParams.get('threshold') || '0.7');
+  
   try {
     const db = await connectDB();
     const table = await getTable(db, 'embeddings');
-    return NextResponse.json({});
+    
+    const graphData = await buildGraphData(table, threshold);
+    
+    return NextResponse.json(graphData);
   } catch (error) {
     console.log(error);
-    return NextResponse.json({ error: 'Failed to connectDB' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to generate graph data' }, { status: 500 });
   }
 }
 
