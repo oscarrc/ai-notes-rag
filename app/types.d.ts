@@ -48,6 +48,28 @@ interface AiPerformance {
   totalTime: number;
 }
 
+
+interface GraphNode {
+  id: string;
+  name: string;
+  path: string;
+  val: number;
+  color: string;
+  isFolder?: boolean;
+}
+
+interface GraphLink {
+  source: string;
+  target: string;
+  value: number;
+}
+
+interface GraphData {
+  nodes: GraphNode[];
+  links: GraphLink[];
+}
+
+
 enum FileType {
   FILE = 'file',
   DIR = 'dir',
