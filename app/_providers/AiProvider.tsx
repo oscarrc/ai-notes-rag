@@ -38,16 +38,19 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     totalTime: 0,
   });
   const [embeddingModel, setEmbeddingModel] = useState(EMBEDDING_MODELS[0]);
-  const [embeddingProgress, setEmbeddingProgress] = useState(0);
   const [generationModel, setGenerationModel] = useState(GENERATION_MODELS[0]);
-  const [generationProgress, setGenerationProgress] = useState(0);
   const [conversation, setConversation] = useState<HistoryMessage[]>([]);
 
   const regeneratingIndex = useRef<number | null>(null);
-
+  
+  // Use refs for progress tracking to avoid dependency cycles
+  const embeddingProgressRef = useRef(0);
+  const generationProgressRef = useRef(0);
+  
+  // Calculate the combined progress without dependencies
   const progress = useMemo((): number => {
-    return (embeddingProgress + generationProgress) / 2;
-  }, [embeddingProgress, generationProgress]);
+    return (embeddingProgressRef.current + generationProgressRef.current) / 2;
+  }, []);
 
   useEffect(() => {
     if (status === AiStatus.IDLE && regeneratingIndex.current !== null) {
@@ -81,11 +84,21 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           break;
 
         case 'EMBEDDING_PROGRESS':
-          setEmbeddingProgress(data.progress);
+          // Update the ref directly to avoid dependency issues
+          embeddingProgressRef.current = data.progress;
+          // Trigger a re-render if needed by using a dummy state update
+          setStatus((prev) => prev);
+          // Check if both models are ready
+          checkModelsReady();
           break;
 
         case 'GENERATION_PROGRESS':
-          setGenerationProgress(data.progress);
+          // Update the ref directly to avoid dependency issues
+          generationProgressRef.current = data.progress;
+          // Trigger a re-render if needed by using a dummy state update
+          setStatus((prev) => prev);
+          // Check if both models are ready
+          checkModelsReady();
           break;
 
         case 'STATUS_UPDATE':
@@ -141,10 +154,10 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const checkModelsReady = useCallback(() => {
-    if (embeddingProgress === 1 && generationProgress === 1) {
+    if (embeddingProgressRef.current === 100 && generationProgressRef.current === 100) {
       setStatus(AiStatus.READY);
     }
-  }, [embeddingProgress, generationProgress]);
+  }, []);
 
   const initEmbedder = useCallback(() => {
     if (!workerRef.current) return;
@@ -553,29 +566,37 @@ MY QUESTION: ${question}`,
     [conversation, getNotes, createChatMessages]
   );
 
+  // Create a memoized context value to avoid unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    embeddingModel,
+    // Expose the ref values as normal properties
+    embeddingProgress: embeddingProgressRef.current,
+    setEmbeddingModel,
+    getEmbeddings,
+    fetchEmbeddings,
+    saveEmbeddings,
+    generationModel,
+    // Expose the ref values as normal properties
+    generationProgress: generationProgressRef.current,
+    setGenerationModel,
+    generateAnswer,
+    regenerateAnswer,
+    getNotes,
+    conversation,
+    status,
+    stopGeneration,
+    progress,
+    performance,
+    regeneratingIndex: regeneratingIndex.current,
+  }), [
+    embeddingModel, generationModel, conversation, status, 
+    progress, performance, generateAnswer, regenerateAnswer, 
+    getNotes, stopGeneration, getEmbeddings, fetchEmbeddings, 
+    saveEmbeddings, setEmbeddingModel, setGenerationModel
+  ]);
+
   return (
-    <AiContext.Provider
-      value={{
-        embeddingModel,
-        embeddingProgress,
-        setEmbeddingModel,
-        getEmbeddings,
-        fetchEmbeddings,
-        saveEmbeddings,
-        generationModel,
-        generationProgress,
-        setGenerationModel,
-        generateAnswer,
-        regenerateAnswer,
-        getNotes,
-        conversation,
-        status,
-        stopGeneration,
-        progress,
-        performance,
-        regeneratingIndex: regeneratingIndex.current,
-      }}
-    >
+    <AiContext.Provider value={contextValue}>
       {children}
     </AiContext.Provider>
   );
