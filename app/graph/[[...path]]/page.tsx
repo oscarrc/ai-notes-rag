@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import ForceGraph2D from 'react-force-graph-2d';
+import useDebounce from '@/app/_hooks/useDebounce';
 import useNavigationStore from '@/app/_store/navigationStore';
 
 const DEFAULT_THRESHOLD = 0.7;
@@ -17,18 +18,7 @@ const GraphView = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Debounce threshold changes to prevent too many API calls
-  const [debouncedThreshold, setDebouncedThreshold] =
-    useState(DEFAULT_THRESHOLD);
-
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedThreshold(threshold);
-    }, 500);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [threshold]);
+  const debouncedThreshold = useDebounce(threshold, 500);
 
   // Optimize the fetch function to get data in chunks if needed
   const fetchGraphData = useCallback(async () => {
