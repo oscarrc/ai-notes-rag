@@ -14,26 +14,6 @@ const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
 const DB = process.env.NEXT_NEXT_PUBLIC_DB_PATH || '/database';
 const EMBEDDING_DIMENSION = 384;
 
-export interface GraphNode {
-  id: string;
-  name: string;
-  path: string;
-  val: number; // Size of node
-  color: string; // Color of node
-  isFolder?: boolean;
-}
-
-export interface GraphLink {
-  source: string;
-  target: string;
-  value: number; // Link strength
-}
-
-export interface GraphData {
-  nodes: GraphNode[];
-  links: GraphLink[];
-}
-
 const embeddingsSchema = new Schema([
   new Field('name', new Utf8()),
   new Field('path', new Utf8()),

@@ -1,6 +1,5 @@
 'use client';
 
-import { GraphData, GraphNode } from '@/app/api/embeddings/helper';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import ForceGraph2D from 'react-force-graph-2d';
