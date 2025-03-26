@@ -1,6 +1,11 @@
 import { connectDB, getTable } from './helper';
+import { extractFilePaths, fetchFiles, getFile } from '../files/helper';
 
 import { NextResponse } from 'next/server';
+
+const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
+const VAULT_PATH = process.env.NEXT_PUBLIC_VAULT_PATH || 'vault';
+const BASE_PATH = `/${DATA_PATH}/${VAULT_PATH}/`.replace('//', '');
 
 export async function GET() {
   try {
@@ -52,5 +57,24 @@ export async function PUT(req: Request) {
   } catch (error) {
     console.log("Error in vector search:", error);
     return NextResponse.json({ error: 'Failed to perform vector search' }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: Request) {
+  try {
+    const fileTree = fetchFiles(BASE_PATH);
+    
+    const allPaths: string[] = [];
+    for (const node of fileTree) {
+      extractFilePaths(node, allPaths);
+    }
+    
+    return NextResponse.json({ 
+      total: allPaths.length,
+      paths: allPaths.map(p => p.replace(`${VAULT_PATH}/`, ''))
+    });
+  } catch (error) {
+    console.log("Error in reindexing:", error);
+    return NextResponse.json({ error: 'Failed to reindex notes' }, { status: 500 });
   }
 }

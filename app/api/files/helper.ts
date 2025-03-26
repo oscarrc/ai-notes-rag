@@ -140,3 +140,17 @@ export const deleteFile = (filePath: string): void => {
     fs.unlinkSync(absolutePath);
   }
 };
+
+export function extractFilePaths(node: FileNode, paths: string[] = []): string[] {
+  if (node.extension && node.extension === '.md') {
+    paths.push(node.path);
+  }
+  
+  if (node.children) {
+    for (const child of node.children) {
+      extractFilePaths(child, paths);
+    }
+  }
+  
+  return paths;
+}
