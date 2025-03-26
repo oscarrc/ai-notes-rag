@@ -174,10 +174,8 @@ export const buildGraphData = async (table: any, threshold = 0.7): Promise<Graph
       }
     }
     
-    // Generate a color based on the file path (more consistent color assignment)
-    const colors = ['primary', 'secondary', 'accent', 'info', 'success', 'warning', 'error'];
-    const pathHash: number = embedding.path.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
-    const colorClass = colors[pathHash % colors.length];
+    // Generate a color based on the file extension for more meaningful grouping
+    const colors = ['primary', 'secondary', 'accent', 'info', 'success', 'warning', 'error'];   
     
     // Add document node with a more consistent size
     nodes.push({
@@ -185,7 +183,7 @@ export const buildGraphData = async (table: any, threshold = 0.7): Promise<Graph
       name: embedding.name || fileName,
       path: embedding.path,
       val: 0.8, // Smaller consistent size
-      color: colorClass
+      color: 'primary'
     });
     
     // Connect documents to their direct parent folder only
