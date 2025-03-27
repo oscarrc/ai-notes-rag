@@ -43,11 +43,10 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
       }, toast.duration);
     }
 
-    return id; // Return ID so it can be referenced later
+    return id;
   };
 
   const dismissToast = (id: string) => {
-    // Clear any existing timeout for this toast
     if (timeoutsRef.current[id]) {
       clearTimeout(timeoutsRef.current[id]);
       delete timeoutsRef.current[id];
@@ -57,19 +56,27 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const updateToast = (id: string, updates: Partial<Omit<Toast, 'id'>>) => {
-    setToasts((prev) =>
-      prev.map((toast) => {
+    setToasts((prev) => {
+      const toastToUpdate = prev.find((toast) => toast.id === id);
+
+      if (
+        !toastToUpdate ||
+        (updates.progress !== undefined &&
+          toastToUpdate.progress === updates.progress) ||
+        Object.keys(updates).length === 0
+      ) {
+        return prev;
+      }
+
+      return prev.map((toast) => {
         if (toast.id === id) {
           const updatedToast = { ...toast, ...updates };
 
-          // Auto-dismiss when progress reaches 100%
           if (updates.progress === 100) {
-            // Clear previous timeout if it exists
             if (timeoutsRef.current[id]) {
               clearTimeout(timeoutsRef.current[id]);
             }
 
-            // Set new timeout to dismiss after 1 second
             timeoutsRef.current[id] = setTimeout(() => {
               dismissToast(id);
             }, 1000);
@@ -78,8 +85,8 @@ export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
           return updatedToast;
         }
         return toast;
-      })
-    );
+      });
+    });
   };
 
   return (

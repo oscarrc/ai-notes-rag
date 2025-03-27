@@ -24,28 +24,58 @@ const NewTab = () => {
       new URL('./_workers/serviceWorker.ts', import.meta.url)
     );
 
-    if (embeddingProgress !== 100)
+    if (embeddingProgress !== 100 && embeddingToast.current === null) {
       embeddingToast.current = showToast({
         message: 'Loading embeddings model',
         type: 'info',
         duration: -1,
         progress: embeddingProgress,
       });
-    if (generationProgress !== 100)
+    }
+
+    if (generationProgress !== 100 && generationToast.current === null) {
       generationToast.current = showToast({
         message: 'Loading generation model',
         type: 'info',
         duration: -1,
         progress: generationProgress,
       });
+    }
   }, []);
 
+  // Use custom hook pattern to safely update the toasts
+  const updateEmbeddingProgressRef = useRef<number>(embeddingProgress);
+  const updateGenerationProgressRef = useRef<number>(generationProgress);
+
   useEffect(() => {
-    generationToast?.current &&
-      updateToast(generationToast.current, { progress: generationProgress });
-    embeddingToast?.current &&
-      updateToast(embeddingToast.current, { progress: embeddingProgress });
-  }, [embeddingProgress, generationProgress]);
+    if (embeddingProgress !== updateEmbeddingProgressRef.current) {
+      updateEmbeddingProgressRef.current = embeddingProgress;
+
+      const timer = setTimeout(() => {
+        if (embeddingToast.current) {
+          updateToast(embeddingToast.current, { progress: embeddingProgress });
+        }
+      }, 0);
+
+      return () => clearTimeout(timer);
+    }
+  }, [embeddingProgress]);
+
+  useEffect(() => {
+    if (generationProgress !== updateGenerationProgressRef.current) {
+      updateGenerationProgressRef.current = generationProgress;
+
+      const timer = setTimeout(() => {
+        if (generationToast.current) {
+          updateToast(generationToast.current, {
+            progress: generationProgress,
+          });
+        }
+      }, 0);
+
+      return () => clearTimeout(timer);
+    }
+  }, [generationProgress]);
 
   return (
     <section className='flex h-full items-center justify-center p-8'>
