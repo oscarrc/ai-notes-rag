@@ -4,12 +4,6 @@ FROM node:18-slim AS builder
 # Set the working directory inside the container
 WORKDIR /app
 
-# Install dependencies required by ONNX Runtime
-RUN apt-get update && apt-get install -y \
-  build-essential \
-  python3 \
-  && rm -rf /var/lib/apt/lists/*
-
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
@@ -19,11 +13,7 @@ RUN npm ci
 # Copy the rest of the application code
 COPY . .
 
-# Configure Next.js for standalone output
-RUN echo "module.exports = { ...require('./next.config.ts'), output: 'standalone' }" > next.config.override.js && \
-  mv next.config.override.js next.config.js
-
-# Build the Next.js application
+# Build the Next.js application (normal build)
 RUN npm run build
 
 # Use a Debian-based image for the final stage
@@ -33,9 +23,12 @@ FROM node:18-slim AS runner
 WORKDIR /app
 
 # Copy the built application from the builder stage
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/package*.json ./
+
+# Install only production dependencies
+RUN npm ci --only=production
 
 # Create the data directory with required subdirectories
 RUN mkdir -p /data/vault /data/database /data/models
@@ -58,4 +51,4 @@ VOLUME ["/data"]
 # Set host to listen on all interfaces
 ENV HOSTNAME=0.0.0.0
 
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
