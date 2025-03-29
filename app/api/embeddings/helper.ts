@@ -56,12 +56,12 @@ export const updateEmbeddingPaths = async (pathMapping: { from: string; to: stri
     const db = await connectDB();
     const table = await getTable(db, 'embeddings');
     
-    const records = await table.filter(
-      `path LIKE "${pathMapping.from}%"`
+    const records = await table.query(
+      `path LIKE "%${pathMapping.from}%"`
     ).toArray();
     
     if (records && records.length > 0) {
-      await table.delete(`path LIKE "${pathMapping.from}%"`);
+      await table.delete(`path LIKE "%${pathMapping.from}%"`);
       
       const updatedRecords = records.map((record: FileNode) => {
         const newPath = record.path.replace(
@@ -97,8 +97,8 @@ export const updateEmbeddingsFilename = async (oldPath: string, newPath: string)
     
     console.log(`Updating embeddings filename from ${oldPath} to ${newPath}`);
     
-    const exactRecords = await table.filter(`path = "${oldPath}"`).toArray();  
-    const childRecords = await table.filter(`path LIKE "${oldPath}/%"`).toArray();
+    const exactRecords = await table.query(`path = "${oldPath}"`).toArray();  
+    const childRecords = await table.query(`path LIKE "%${oldPath}/%"`).toArray();
     
     const records = [...exactRecords, ...childRecords];
     
@@ -108,7 +108,7 @@ export const updateEmbeddingsFilename = async (oldPath: string, newPath: string)
       }
       
       if (childRecords.length > 0) {
-        await table.delete(`path LIKE "${oldPath}/%"`);
+        await table.delete(`path LIKE "%${oldPath}/%"`);
       }
       
       const oldName = path.basename(oldPath, path.extname(oldPath));
