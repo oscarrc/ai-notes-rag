@@ -1,3 +1,4 @@
+import { updateEmbeddingPaths } from '../../embeddings/helper';
 import { deleteFile, getFile, moveFile, updateFile } from '../helper';
 
 import { NextResponse } from 'next/server';
@@ -41,6 +42,19 @@ export async function POST(
       return NextResponse.json({ error: 'Source and target paths are required' }, { status: 400 });
     
     const movedFile = await moveFile(sourcePath, targetPath);
+    
+    if ((movedFile.extension === '.md' || !movedFile.extension) && movedFile._pathMapping) {
+      try {
+        const result = await updateEmbeddingPaths(movedFile._pathMapping);
+        if (!result.success) {
+          console.error("Failed to update vector database paths:", result.error);
+        } else if (result.count > 0) {
+          console.log(`Updated ${result.count} embedding records`);
+        }
+      } catch (dbError) {
+        console.error("Failed to update vector database paths:", dbError);
+      }
+    }
 
     return NextResponse.json(movedFile);
   } catch (error) {

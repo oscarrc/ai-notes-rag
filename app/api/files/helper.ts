@@ -157,7 +157,7 @@ export function extractFilePaths(node: FileNode, paths: string[] = []): string[]
 
 export function moveFile(sourcePath: string[], targetPath: string): FileNode {
     const absoluteSourcePath = path.join(process.cwd(), DATA_PATH, ...sourcePath);    
-    const name = path.basename(absoluteSourcePath, path.extname(absoluteSourcePath))    
+    const name = path.basename(absoluteSourcePath, path.extname(absoluteSourcePath));    
     const extension = path.extname(absoluteSourcePath);
     const absoluteTargetPath = path.join(process.cwd(), DATA_PATH, targetPath, name + extension);
 
@@ -170,7 +170,34 @@ export function moveFile(sourcePath: string[], targetPath: string): FileNode {
       fs.mkdirSync(targetDir, { recursive: true });
     }
 
-    fs.renameSync(absoluteSourcePath, absoluteTargetPath);
+    // Store source information before moving
+    const isDirectory = fs.statSync(absoluteSourcePath).isDirectory();
+    const originalPathPrefix = path.join(VAULT_PATH, ...sourcePath);
+    const newPathPrefix = path.join(VAULT_PATH, targetPath, name + extension);
 
-    return { name, path: path.join(VAULT_PATH, ...targetPath), extension };
+    // Perform the file or directory move
+    fs.renameSync(absoluteSourcePath, absoluteTargetPath);
+    
+    // Return info based on whether it's a file or directory
+    if (isDirectory) {
+      return {
+        name,
+        path: path.join(VAULT_PATH, targetPath, name),
+        children: [], // Children will be reloaded separately
+        _pathMapping: { // Include path mapping info for vector DB update
+          from: originalPathPrefix,
+          to: newPathPrefix
+        }
+      };
+    } else {
+      return { 
+        name, 
+        path: path.join(VAULT_PATH, targetPath, name + extension), 
+        extension,
+        _pathMapping: { // Include path mapping info for vector DB update
+          from: originalPathPrefix,
+          to: newPathPrefix  
+        }
+      };
+    }
 }
