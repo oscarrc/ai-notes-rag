@@ -154,3 +154,96 @@ export function extractFilePaths(node: FileNode, paths: string[] = []): string[]
   
   return paths;
 }
+
+export function moveFile(sourcePath: string[], targetPath: string): FileNode {
+    const absoluteSourcePath = path.join(process.cwd(), DATA_PATH, ...sourcePath);    
+    const name = path.basename(absoluteSourcePath, path.extname(absoluteSourcePath));    
+    const extension = path.extname(absoluteSourcePath);
+    const absoluteTargetPath = path.join(process.cwd(), DATA_PATH, targetPath, name + extension);
+
+    if (!fs.existsSync(absoluteSourcePath)) {
+      throw new Error(`Source file does not exist: ${absoluteSourcePath}`);
+    }
+
+    const targetDir = path.dirname(absoluteTargetPath);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    // Store source information before moving
+    const isDirectory = fs.statSync(absoluteSourcePath).isDirectory();
+    const originalPathPrefix = path.join(VAULT_PATH, ...sourcePath);
+    const newPathPrefix = path.join(VAULT_PATH, targetPath, name + extension);
+
+    // Perform the file or directory move
+    fs.renameSync(absoluteSourcePath, absoluteTargetPath);
+    
+    // Return info based on whether it's a file or directory
+    if (isDirectory) {
+      return {
+        name,
+        path: path.join(VAULT_PATH, targetPath, name),
+        children: [],
+        _pathMapping: {
+          from: originalPathPrefix,
+          to: newPathPrefix
+        }
+      };
+    } else {
+      return { 
+        name, 
+        path: path.join(VAULT_PATH, targetPath, name + extension), 
+        extension,
+        _pathMapping: {
+          from: originalPathPrefix,
+          to: newPathPrefix  
+        }
+      };
+    }
+}
+
+export function renameFile(sourcePath: string[], newName: string): FileNode {
+    const absoluteSourcePath = path.join(process.cwd(), DATA_PATH, ...sourcePath);
+    if (!fs.existsSync(absoluteSourcePath)) {
+      throw new Error(`Source file does not exist: ${absoluteSourcePath}`);
+    }
+    
+    const sourceDir = path.dirname(absoluteSourcePath);
+    const extension = path.extname(absoluteSourcePath);
+    const isDirectory = fs.statSync(absoluteSourcePath).isDirectory();
+    
+    const absoluteTargetPath = path.join(sourceDir, newName + (isDirectory ? '' : extension));
+    
+    const relativeDirPath = path.relative(
+      path.join(process.cwd(), DATA_PATH),
+      sourceDir
+    );
+    
+    const originalPathPrefix = path.join(VAULT_PATH, ...sourcePath);
+    const parentVaultPath = originalPathPrefix.substring(0, originalPathPrefix.lastIndexOf('/'));
+    const newPathPrefix = path.join(parentVaultPath, newName + (isDirectory ? '' : extension));
+    
+    fs.renameSync(absoluteSourcePath, absoluteTargetPath);
+    
+    if (isDirectory) {
+      return {
+        name: newName,
+        path: newPathPrefix,
+        children: [],
+        _pathMapping: { 
+          from: originalPathPrefix,
+          to: newPathPrefix
+        }
+      };
+    } else {
+      return {
+        name: newName, 
+        path: newPathPrefix,
+        extension,
+        _pathMapping: {
+          from: originalPathPrefix,
+          to: newPathPrefix
+        }
+      };
+    }
+}

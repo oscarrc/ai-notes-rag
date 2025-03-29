@@ -8,6 +8,10 @@ interface FileNode {
   extension?: string;
   content?: any;
   children?: FileNode[];
+  _pathMapping?: {
+    from: string;
+    to: string;
+  };
 }
 
 interface WorkerState {
