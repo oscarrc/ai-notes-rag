@@ -2,10 +2,7 @@ name: Build and Push Docker Image
 
 on:
   push:
-    branches: [master]
     tags: ['v*']
-  pull_request:
-    branches: [master]
   workflow_dispatch:
 
 env:
