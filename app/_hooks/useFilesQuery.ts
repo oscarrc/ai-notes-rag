@@ -1,6 +1,7 @@
+import { insertFile, removeFile, replaceFile } from '../_utils/files';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+
 import { useEffect } from 'react';
-import { removeFile, insertFile, replaceFile } from '../_utils/files';
 import useNavigationStore from '../_store/navigationStore';
 
 const vault = process.env.NEXT_PUBLIC_VAULT_PATH || '/vault';
@@ -45,6 +46,19 @@ export const useFilesQuery = () => {
     const updatedFile = await data.json();
     return updatedFile;
   };
+
+  const moveFile = async ({ file, targetPath }: { file: FileNode; targetPath: string }) => {
+    const data = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}api/files/${file.path}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ targetPath }),
+      }
+    );
+
+    const movedFile = await data.json();
+    return movedFile;
+  }
 
   const deleteFile = async (file: FileNode) => {
     const data = await fetch(
@@ -99,6 +113,13 @@ export const useFilesQuery = () => {
     },
   });
 
+  const moveMutation = useMutation({
+    mutationFn: ({ file, targetPath }: { file: FileNode; targetPath: string }) => moveFile({ file, targetPath }),
+    onSuccess: () => {
+      refetch();
+    },
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (file: FileNode) => deleteFile(file),
     onSuccess: (_, file) => {
@@ -130,5 +151,6 @@ export const useFilesQuery = () => {
     createFile: createMutation.mutate,
     updateFile: updateMutation.mutate,
     deleteFile: deleteMutation.mutate,
+    moveFile: moveMutation.mutate,
   };
 };

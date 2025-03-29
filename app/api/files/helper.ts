@@ -154,3 +154,23 @@ export function extractFilePaths(node: FileNode, paths: string[] = []): string[]
   
   return paths;
 }
+
+export function moveFile(sourcePath: string[], targetPath: string): FileNode {
+    const absoluteSourcePath = path.join(process.cwd(), DATA_PATH, ...sourcePath);    
+    const name = path.basename(absoluteSourcePath, path.extname(absoluteSourcePath))    
+    const extension = path.extname(absoluteSourcePath);
+    const absoluteTargetPath = path.join(process.cwd(), DATA_PATH, targetPath, name + extension);
+
+    if (!fs.existsSync(absoluteSourcePath)) {
+      throw new Error(`Source file does not exist: ${absoluteSourcePath}`);
+    }
+
+    const targetDir = path.dirname(absoluteTargetPath);
+    if (!fs.existsSync(targetDir)) {
+      fs.mkdirSync(targetDir, { recursive: true });
+    }
+
+    fs.renameSync(absoluteSourcePath, absoluteTargetPath);
+
+    return { name, path: path.join(VAULT_PATH, ...targetPath), extension };
+}

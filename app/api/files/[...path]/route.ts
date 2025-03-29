@@ -1,5 +1,6 @@
+import { deleteFile, getFile, moveFile, updateFile } from '../helper';
+
 import { NextResponse } from 'next/server';
-import { getFile, updateFile, deleteFile } from '../helper';
 import path from 'path';
 
 const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
@@ -25,6 +26,25 @@ export async function GET(
       { error: 'Failed to retrieve file' },
       { status: 500 }
     );
+  }
+}
+
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ path?: string[] }> }
+) {
+  try {
+    const { path: sourcePath } = await params;
+    const { targetPath } = await req.json();
+
+    if(!sourcePath || !targetPath)
+      return NextResponse.json({ error: 'Source and target paths are required' }, { status: 400 });
+    
+    const movedFile = await moveFile(sourcePath, targetPath);
+
+    return NextResponse.json(movedFile);
+  } catch (error) {
+    return NextResponse.json({ error: (error as Error)?.message ?? 'Failed to move file' }, { status: 500 });
   }
 }
 

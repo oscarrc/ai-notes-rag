@@ -10,7 +10,7 @@ import {
 } from 'react';
 
 export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
-export const GENERATION_MODELS = ['Llama-3.2-1B-Instruct-q4f16'];
+export const GENERATION_MODELS = ['Llama-3.2-1B-Instruct'];
 
 export const AiContext = createContext<any>(null);
 
@@ -42,11 +42,11 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const [conversation, setConversation] = useState<HistoryMessage[]>([]);
 
   const regeneratingIndex = useRef<number | null>(null);
-  
+
   // Use refs for progress tracking to avoid dependency cycles
   const embeddingProgressRef = useRef(0);
   const generationProgressRef = useRef(0);
-  
+
   // Calculate the combined progress without dependencies
   const progress = useMemo((): number => {
     return (embeddingProgressRef.current + generationProgressRef.current) / 2;
@@ -154,7 +154,10 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const checkModelsReady = useCallback(() => {
-    if (embeddingProgressRef.current === 100 && generationProgressRef.current === 100) {
+    if (
+      embeddingProgressRef.current === 100 &&
+      generationProgressRef.current === 100
+    ) {
       setStatus(AiStatus.READY);
     }
   }, []);
@@ -567,37 +570,49 @@ MY QUESTION: ${question}`,
   );
 
   // Create a memoized context value to avoid unnecessary re-renders
-  const contextValue = useMemo(() => ({
-    embeddingModel,
-    // Expose the ref values as normal properties
-    embeddingProgress: embeddingProgressRef.current,
-    setEmbeddingModel,
-    getEmbeddings,
-    fetchEmbeddings,
-    saveEmbeddings,
-    generationModel,
-    // Expose the ref values as normal properties
-    generationProgress: generationProgressRef.current,
-    setGenerationModel,
-    generateAnswer,
-    regenerateAnswer,
-    getNotes,
-    conversation,
-    status,
-    stopGeneration,
-    progress,
-    performance,
-    regeneratingIndex: regeneratingIndex.current,
-  }), [
-    embeddingModel, generationModel, conversation, status, 
-    progress, performance, generateAnswer, regenerateAnswer, 
-    getNotes, stopGeneration, getEmbeddings, fetchEmbeddings, 
-    saveEmbeddings, setEmbeddingModel, setGenerationModel
-  ]);
+  const contextValue = useMemo(
+    () => ({
+      embeddingModel,
+      // Expose the ref values as normal properties
+      embeddingProgress: embeddingProgressRef.current,
+      setEmbeddingModel,
+      getEmbeddings,
+      fetchEmbeddings,
+      saveEmbeddings,
+      generationModel,
+      // Expose the ref values as normal properties
+      generationProgress: generationProgressRef.current,
+      setGenerationModel,
+      generateAnswer,
+      regenerateAnswer,
+      getNotes,
+      conversation,
+      status,
+      stopGeneration,
+      progress,
+      performance,
+      regeneratingIndex: regeneratingIndex.current,
+    }),
+    [
+      embeddingModel,
+      generationModel,
+      conversation,
+      status,
+      progress,
+      performance,
+      generateAnswer,
+      regenerateAnswer,
+      getNotes,
+      stopGeneration,
+      getEmbeddings,
+      fetchEmbeddings,
+      saveEmbeddings,
+      setEmbeddingModel,
+      setGenerationModel,
+    ]
+  );
 
   return (
-    <AiContext.Provider value={contextValue}>
-      {children}
-    </AiContext.Provider>
+    <AiContext.Provider value={contextValue}>{children}</AiContext.Provider>
   );
 };
