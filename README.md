@@ -1,3 +1,5 @@
+[![Build and Push Docker Image](https://github.com/oscarrc/ai-notes-rag/actions/workflows/build.yml/badge.svg)](https://github.com/oscarrc/ai-notes-rag/actions/workflows/build.yml)
+
 # AI Notes: A RAG-Driven AI-Powered Personal Knowledge Base
 
 ## Overview
