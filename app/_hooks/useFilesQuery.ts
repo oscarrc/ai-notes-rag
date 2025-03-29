@@ -46,6 +46,21 @@ export const useFilesQuery = () => {
     const updatedFile = await data.json();
     return updatedFile;
   };
+  
+  const renameFile = async ({ path, newName }: { path: string, newName: string }) => {
+    const data = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}api/files/${path}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: newName
+        }),
+      }
+    );
+
+    const renamedFile = await data.json();
+    return renamedFile;
+  };
 
   const moveFile = async ({ file, targetPath }: { file: FileNode; targetPath: string }) => {
     const data = await fetch(
@@ -112,6 +127,15 @@ export const useFilesQuery = () => {
       );
     },
   });
+  
+  const renameMutation = useMutation({
+    mutationFn: ({ path, newName }: { path: string, newName: string }) => 
+      renameFile({ path, newName }),
+    onSuccess: () => {
+      // Full refetch since renaming might affect multiple files (for folders)
+      refetch();
+    },
+  });
 
   const moveMutation = useMutation({
     mutationFn: ({ file, targetPath }: { file: FileNode; targetPath: string }) => moveFile({ file, targetPath }),
@@ -152,5 +176,6 @@ export const useFilesQuery = () => {
     updateFile: updateMutation.mutate,
     deleteFile: deleteMutation.mutate,
     moveFile: moveMutation.mutate,
+    renameFile: renameMutation.mutate,
   };
 };

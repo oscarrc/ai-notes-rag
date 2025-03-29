@@ -56,18 +56,14 @@ export const updateEmbeddingPaths = async (pathMapping: { from: string; to: stri
     const db = await connectDB();
     const table = await getTable(db, 'embeddings');
     
-    // Find all records where path starts with the old path prefix
     const records = await table.filter(
       `path LIKE "${pathMapping.from}%"`
     ).toArray();
     
     if (records && records.length > 0) {
-      // First, delete all records with the old path prefix to avoid duplicates
       await table.delete(`path LIKE "${pathMapping.from}%"`);
       
-      // Create updated records with new paths
-      const updatedRecords = records.map(record => {
-        // Create new path by replacing the old prefix with the new one
+      const updatedRecords = records.map((record: FileNode) => {
         const newPath = record.path.replace(
           pathMapping.from, 
           pathMapping.to
@@ -76,7 +72,6 @@ export const updateEmbeddingPaths = async (pathMapping: { from: string; to: stri
         return { ...record, path: newPath };
       });
       
-      // Insert the updated records with new paths
       await table.add(updatedRecords);
       
       return {
@@ -91,6 +86,67 @@ export const updateEmbeddingPaths = async (pathMapping: { from: string; to: stri
     return { 
       success: false, 
       error: (error as Error)?.message || "Unknown error updating paths"
+    };
+  }
+};
+
+export const updateEmbeddingsFilename = async (oldPath: string, newPath: string) => {
+  try {
+    const db = await connectDB();
+    const table = await getTable(db, 'embeddings');
+    
+    console.log(`Updating embeddings filename from ${oldPath} to ${newPath}`);
+    
+    const exactRecords = await table.filter(`path = "${oldPath}"`).toArray();  
+    const childRecords = await table.filter(`path LIKE "${oldPath}/%"`).toArray();
+    
+    const records = [...exactRecords, ...childRecords];
+    
+    if (records && records.length > 0) {
+      if (exactRecords.length > 0) {
+        await table.delete(`path = "${oldPath}"`);
+      }
+      
+      if (childRecords.length > 0) {
+        await table.delete(`path LIKE "${oldPath}/%"`);
+      }
+      
+      const oldName = path.basename(oldPath, path.extname(oldPath));
+      const newName = path.basename(newPath, path.extname(newPath));
+      console.log(`Renaming from "${oldName}" to "${newName}"`);
+      
+      const updatedRecords = records.map((record: any) => {
+        let updatedPath = record.path;
+        
+        if (record.path === oldPath) {
+          updatedPath = newPath;
+        } else if (record.path.startsWith(`${oldPath}/`)) {
+          updatedPath = record.path.replace(`${oldPath}/`, `${newPath}/`);
+        }
+        
+        const updatedName = record.name === oldName ? newName : record.name;
+        
+        return { 
+          ...record, 
+          path: updatedPath,
+          name: updatedName
+        };
+      });
+      
+      await table.add(updatedRecords);
+      
+      return {
+        success: true, 
+        count: records.length
+      };
+    }
+    
+    return { success: true, count: 0 };
+  } catch (error) {
+    console.error("Error updating embeddings filename:", error);
+    return { 
+      success: false, 
+      error: (error as Error)?.message || "Unknown error updating embeddings filename"
     };
   }
 };

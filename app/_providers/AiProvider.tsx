@@ -322,13 +322,6 @@ MY QUESTION: ${question}`,
           ? regeneratingIndex.current
           : newHistory.length - 1;
 
-      console.log(
-        'Target index:',
-        targetIndex,
-        'Regenerating index:',
-        regeneratingIndex.current
-      );
-
       // Ensure there's a message to update at the target index
       if (
         targetIndex >= 0 &&

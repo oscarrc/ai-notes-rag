@@ -17,7 +17,7 @@ import useNavigationStore from '@/app/_store/navigationStore';
 
 const Sidebar = () => {
   const { isMinWidth } = useBreakpoint('lg');
-  const { files, isLoading, moveFile } = useFilesQuery();
+  const { files, isLoading, moveFile, renameFile } = useFilesQuery();
   const { addTab } = useNavigationStore();
 
   const [isOpen, setIsOpen] = useState(true);
@@ -58,7 +58,7 @@ const Sidebar = () => {
         {isLoading ? (
           <SidebarSkeleton />
         ) : (
-          <SidebarFileTree files={files} onMoveFile={moveFile} />
+          <SidebarFileTree files={files} onMoveFile={moveFile} onRenameFile={renameFile} />
         )}
       </SidebarDrawer>
     </nav>

@@ -1,5 +1,5 @@
-import { updateEmbeddingPaths } from '../../embeddings/helper';
-import { deleteFile, getFile, moveFile, updateFile } from '../helper';
+import { deleteFile, getFile, moveFile, renameFile, updateFile } from '../helper';
+import { updateEmbeddingPaths, updateEmbeddingsFilename } from '../../embeddings/helper';
 
 import { NextResponse } from 'next/server';
 import path from 'path';
@@ -43,13 +43,20 @@ export async function POST(
     
     const movedFile = await moveFile(sourcePath, targetPath);
     
-    if ((movedFile.extension === '.md' || !movedFile.extension) && movedFile._pathMapping) {
+    if (movedFile._pathMapping) {
       try {
-        const result = await updateEmbeddingPaths(movedFile._pathMapping);
+        const oldPath = movedFile._pathMapping.from;
+        const newPath = movedFile._pathMapping.to;
+        
+        const result = await updateEmbeddingPaths({
+          from: oldPath,
+          to: newPath
+        });
+        
         if (!result.success) {
-          console.error("Failed to update vector database paths:", result.error);
+          console.error("Failed to update vector database paths after move:", result.error);
         } else if (result.count > 0) {
-          console.log(`Updated ${result.count} embedding records`);
+          console.log(`Updated ${result.count} embedding records after move`);
         }
       } catch (dbError) {
         console.error("Failed to update vector database paths:", dbError);
@@ -71,13 +78,44 @@ export async function PUT(
   if (!filePath)
     return NextResponse.json({ error: 'Path is required' }, { status: 400 });
 
-  const fileNode: FileNode = await req.json();
-
-  if (!fileNode)
-    return NextResponse.json({ error: 'File is required' }, { status: 400 });
+  const data = await req.json();
 
   try {
-    const updatedFile = updateFile(filePath, fileNode);
+    if (data.name) {
+      const originalName = filePath[filePath.length - 1];
+      const originalNameWithoutExt = originalName.includes('.') ? 
+        originalName.substring(0, originalName.lastIndexOf('.')) : originalName;
+      
+      if (data.name !== originalNameWithoutExt) {
+        
+        const renamedFile = renameFile(filePath, data.name);
+        
+        if (renamedFile._pathMapping) {
+          try {
+            const oldPath = renamedFile._pathMapping.from;
+            const newPath = renamedFile._pathMapping.to;
+            
+            await updateEmbeddingsFilename(oldPath, newPath);            
+          } catch (error) {
+            console.error("Failed to update vector database:", error);
+          }
+        }
+        
+        return NextResponse.json(renamedFile);
+      }
+    }
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to rename file' },
+      { status: 500 }
+    );
+  }
+  
+  if (!data)
+    return NextResponse.json({ error: 'File data is required' }, { status: 400 });
+
+  try {
+    const updatedFile = updateFile(filePath, data);
     return NextResponse.json(updatedFile);
   } catch (error) {
     console.error(error);

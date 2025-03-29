@@ -183,8 +183,8 @@ export function moveFile(sourcePath: string[], targetPath: string): FileNode {
       return {
         name,
         path: path.join(VAULT_PATH, targetPath, name),
-        children: [], // Children will be reloaded separately
-        _pathMapping: { // Include path mapping info for vector DB update
+        children: [],
+        _pathMapping: {
           from: originalPathPrefix,
           to: newPathPrefix
         }
@@ -194,9 +194,55 @@ export function moveFile(sourcePath: string[], targetPath: string): FileNode {
         name, 
         path: path.join(VAULT_PATH, targetPath, name + extension), 
         extension,
-        _pathMapping: { // Include path mapping info for vector DB update
+        _pathMapping: {
           from: originalPathPrefix,
           to: newPathPrefix  
+        }
+      };
+    }
+}
+
+export function renameFile(sourcePath: string[], newName: string): FileNode {
+    const absoluteSourcePath = path.join(process.cwd(), DATA_PATH, ...sourcePath);
+    if (!fs.existsSync(absoluteSourcePath)) {
+      throw new Error(`Source file does not exist: ${absoluteSourcePath}`);
+    }
+    
+    const sourceDir = path.dirname(absoluteSourcePath);
+    const extension = path.extname(absoluteSourcePath);
+    const isDirectory = fs.statSync(absoluteSourcePath).isDirectory();
+    
+    const absoluteTargetPath = path.join(sourceDir, newName + (isDirectory ? '' : extension));
+    
+    const relativeDirPath = path.relative(
+      path.join(process.cwd(), DATA_PATH),
+      sourceDir
+    );
+    
+    const originalPathPrefix = path.join(VAULT_PATH, ...sourcePath);
+    const parentVaultPath = originalPathPrefix.substring(0, originalPathPrefix.lastIndexOf('/'));
+    const newPathPrefix = path.join(parentVaultPath, newName + (isDirectory ? '' : extension));
+    
+    fs.renameSync(absoluteSourcePath, absoluteTargetPath);
+    
+    if (isDirectory) {
+      return {
+        name: newName,
+        path: newPathPrefix,
+        children: [],
+        _pathMapping: { 
+          from: originalPathPrefix,
+          to: newPathPrefix
+        }
+      };
+    } else {
+      return {
+        name: newName, 
+        path: newPathPrefix,
+        extension,
+        _pathMapping: {
+          from: originalPathPrefix,
+          to: newPathPrefix
         }
       };
     }
