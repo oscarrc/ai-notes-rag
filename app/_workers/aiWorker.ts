@@ -154,9 +154,9 @@ async function generateAnswer(messages: any[]): Promise<{success: boolean, error
     const outputs = await generator.generate({
        ...(inputs as any),
         max_new_tokens: 512,
-        temperature: 0,
+        temperature: 0.1,
         top_p: 0.9,
-        repetition_penalty: 1.1,
+        repetition_penalty: 1.2,
         do_sample: false,
         stop_sequences: ["I don't have enough", "I don't know", "MY QUESTION:", "MY NOTES:"],
         streamer,

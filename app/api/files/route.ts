@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server';
 import { createFile, fetchFiles } from './helper';
+
+import { NextResponse } from 'next/server';
 
 const DATA_PATH = process.env.NEXT_PUBLIC_DATA_PATH || 'data';
 const VAULT_PATH = process.env.NEXT_PUBLIC_VAULT_PATH || 'vault';
@@ -31,3 +32,4 @@ export async function POST(req: Request) {
     );
   }
 }
+

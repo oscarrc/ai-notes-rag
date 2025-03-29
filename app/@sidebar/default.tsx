@@ -1,23 +1,23 @@
 'use client';
 
+import { BsChatDots, BsSearch } from 'react-icons/bs';
+import { chatTab, graphTab } from '@/app/_utils/tabs';
+import { useEffect, useState } from 'react';
+
 import ButtonSquare from '@/app/_components/ButtonSquare';
-import useBreakpoint from '@/app/_hooks/useBreakpoint';
-import { useEffect, useRef, useState } from 'react';
-import SidebarShortcuts from './_components/SidebarShortcuts';
-import { BsSearch, BsChatDots } from 'react-icons/bs';
 import { PiGraphLight } from 'react-icons/pi';
 import SidebarDrawer from './_components/SidebarDrawer';
-import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
 import SidebarFileTree from './_components/SidebarFileTree';
-import Search from '@/app/_components/Search';
-import useNavigationStore from '@/app/_store/navigationStore';
-import { chatTab, graphTab } from '@/app/_utils/tabs';
+import SidebarShortcuts from './_components/SidebarShortcuts';
 import SidebarSkeleton from './_components/SidebarSkeleton';
 import { showModal } from '@/app/_utils/modals';
+import useBreakpoint from '@/app/_hooks/useBreakpoint';
+import { useFilesQuery } from '@/app/_hooks/useFilesQuery';
+import useNavigationStore from '@/app/_store/navigationStore';
 
 const Sidebar = () => {
   const { isMinWidth } = useBreakpoint('lg');
-  const { files, isLoading } = useFilesQuery();
+  const { files, isLoading, moveFile, renameFile } = useFilesQuery();
   const { addTab } = useNavigationStore();
 
   const [isOpen, setIsOpen] = useState(true);
@@ -55,7 +55,11 @@ const Sidebar = () => {
         </ButtonSquare>
       </SidebarShortcuts>
       <SidebarDrawer isOpen={isOpen}>
-        {isLoading ? <SidebarSkeleton /> : <SidebarFileTree files={files} />}
+        {isLoading ? (
+          <SidebarSkeleton />
+        ) : (
+          <SidebarFileTree files={files} onMoveFile={moveFile} onRenameFile={renameFile} />
+        )}
       </SidebarDrawer>
     </nav>
   );
