@@ -9,6 +9,9 @@ import {
   useState,
 } from 'react';
 
+import { UndefinedInitialDataOptions } from '@tanstack/react-query';
+import { send } from 'process';
+
 export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
 export const GENERATION_MODELS = [
   'Llama-3.2-1B-Instruct-finetuned',
@@ -35,11 +38,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const pendingRequests = useRef<Map<string, PendingRequest>>(new Map());
 
   const [status, setStatus] = useState<AiStatus>(AiStatus.IDLE);
-  const [performance, setPerformance] = useState<AiPerformance>({
-    tps: 0,
-    numTokens: 0,
-    totalTime: 0,
-  });
   const [embeddingModel, setEmbeddingModel] = useState(EMBEDDING_MODELS[0]);
   const [generationModel, setGenerationModel] = useState(GENERATION_MODELS[0]);
   const [conversation, setConversation] = useState<HistoryMessage[]>([]);
@@ -53,6 +51,33 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   // Calculate the combined progress without dependencies
   const progress = useMemo((): number => {
     return (embeddingProgressRef.current + generationProgressRef.current) / 2;
+  }, []);
+
+  const sendToWorker = useCallback((type: string, payload: any) => {
+    return new Promise((resolve, reject) => {
+      if (!workerRef.current) {
+        reject(new Error('Worker not initialized'));
+        return;
+      }
+
+      const id = Math.random().toString(36).substring(2, 9);
+
+      pendingRequests.current.set(id, { resolve, reject });
+
+      workerRef.current.postMessage({
+        type,
+        payload: { ...payload, id },
+        id,
+      });
+
+      setTimeout(() => {
+        if (pendingRequests.current.has(id)) {
+          const { reject } = pendingRequests.current.get(id)!;
+          reject(new Error('Worker request timeout'));
+          pendingRequests.current.delete(id);
+        }
+      }, 120000);
+    });
   }, []);
 
   useEffect(() => {
@@ -106,14 +131,29 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           streamResponse(data.text);
           break;
 
-        case 'PERFORMANCE_UPDATE':
-          const { tps, numTokens, totalTime } = data;
-          setPerformance({ tps, numTokens, totalTime });
-          break;
-
         case 'GENERATION_COMPLETE':
           setStatus(AiStatus.IDLE);
+          if (id && pendingRequests.current.has(id)) {
+            const { resolve, reject } = pendingRequests.current.get(id)!;
+            if (data.success) {
+              resolve({
+                response: data.response,
+                performance: data.performance,
+              });
+            } else {
+              reject(new Error(data.error));
+            }
+            pendingRequests.current.delete(id);
+          }
           regeneratingIndex.current = null;
+          break;
+
+        case 'GENERATION_STOPPED':
+          setStatus(AiStatus.IDLE);
+          if (id && pendingRequests.current.has(id)) {
+            const { resolve, reject } = pendingRequests.current.get(id)!;
+            resolve(true);
+          }
           break;
 
         case 'EMBEDDINGS_RESULT':
@@ -159,50 +199,13 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, []);
 
-  const initEmbedder = useCallback(() => {
-    if (!workerRef.current) return;
-
-    workerRef.current.postMessage({
-      type: 'INIT_EMBEDDER',
-      payload: { embeddingModel },
-    });
+  const initEmbedder = useCallback(async () => {
+    return sendToWorker('INIT_EMBEDDER', { embeddingModel });
   }, [embeddingModel]);
 
-  const initGenerator = useCallback(() => {
-    if (!workerRef.current) return;
-
-    workerRef.current.postMessage({
-      type: 'INIT_GENERATOR',
-      payload: { generationModel },
-    });
+  const initGenerator = useCallback(async () => {
+    return sendToWorker('INIT_GENERATOR', { generationModel });
   }, [generationModel]);
-
-  const sendToWorker = useCallback((type: string, payload: any) => {
-    return new Promise((resolve, reject) => {
-      if (!workerRef.current) {
-        reject(new Error('Worker not initialized'));
-        return;
-      }
-
-      const id = Math.random().toString(36).substring(2, 9);
-
-      pendingRequests.current.set(id, { resolve, reject });
-
-      workerRef.current.postMessage({
-        type,
-        payload: { ...payload, id },
-        id,
-      });
-
-      setTimeout(() => {
-        if (pendingRequests.current.has(id)) {
-          const { reject } = pendingRequests.current.get(id)!;
-          reject(new Error('Worker request timeout'));
-          pendingRequests.current.delete(id);
-        }
-      }, 60000);
-    });
-  }, []);
 
   const getEmbeddings = useCallback(
     async (input: string): Promise<Embedding> => {
@@ -362,18 +365,16 @@ MY QUESTION: ${question}`,
   }, []);
 
   const stopGeneration = () => {
-    if (!workerRef.current) return;
-    workerRef.current.postMessage({ type: 'STOP_GENERATION' });
+    sendToWorker('STOP_GENERATION', {});
   };
 
   const generateAnswer = useCallback(
-    async (question: string) => {
+    async (question: string): Promise<Generation | undefined> => {
       if (!workerRef.current) return;
 
       regeneratingIndex.current = null;
 
       setConversation((c) => [...c, { role: 'user', content: question }]);
-      setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
 
       try {
         setStatus(AiStatus.LOADING);
@@ -408,10 +409,9 @@ MY QUESTION: ${question}`,
           return newHistory;
         });
 
-        workerRef.current.postMessage({
-          type: 'GENERATE_ANSWER',
-          payload: { messages: chatMessages },
-        });
+        return sendToWorker('GENERATE_ANSWER', {
+          messages: chatMessages,
+        }) as Promise<Generation>;
       } catch (error) {
         console.error('Error during model execution:', error);
         setStatus(AiStatus.ERROR);
@@ -429,7 +429,7 @@ MY QUESTION: ${question}`,
 
   // Modified regenerateAnswer function
   const regenerateAnswer = useCallback(
-    async (messageIndex: number) => {
+    async (messageIndex: number): Promise<Generation | undefined> => {
       if (
         !workerRef.current ||
         messageIndex < 0 ||
@@ -450,8 +450,6 @@ MY QUESTION: ${question}`,
       }
 
       if (!userQuestion) return;
-
-      setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
       setStatus(AiStatus.LOADING);
 
       try {
@@ -522,11 +520,9 @@ MY QUESTION: ${question}`,
           return newHistory;
         });
 
-        // Start the generation process
-        workerRef.current.postMessage({
-          type: 'GENERATE_ANSWER',
-          payload: { messages: chatMessages },
-        });
+        return sendToWorker('GENERATE_ANSWER', {
+          messages: chatMessages,
+        }) as Promise<Generation>;
       } catch (error) {
         console.error('Error during model execution:', error);
         setStatus(AiStatus.ERROR);
@@ -574,7 +570,6 @@ MY QUESTION: ${question}`,
       status,
       stopGeneration,
       progress,
-      performance,
       regeneratingIndex: regeneratingIndex.current,
     }),
     [
@@ -583,7 +578,6 @@ MY QUESTION: ${question}`,
       conversation,
       status,
       progress,
-      performance,
       generateAnswer,
       regenerateAnswer,
       getNotes,

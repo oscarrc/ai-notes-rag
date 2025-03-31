@@ -1,12 +1,11 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
-
 import { AiStatus } from '@/app/_providers/AiProvider';
 import ChatAnswer from './_components/ChatAnswer';
 import ChatInput from './_components/ChatInput';
 import ChatQuestion from './_components/ChatQuestion';
 import { useAi } from '@/app/_hooks/useAi';
+import { useCallback } from 'react';
 import { useToast } from '../_hooks/useToast';
 
 const ChatTab = () => {
@@ -15,7 +14,6 @@ const ChatTab = () => {
     status,
     generateAnswer,
     stopGeneration,
-    performance,
     regenerateAnswer,
     regeneratingIndex,
   } = useAi();
@@ -24,12 +22,30 @@ const ChatTab = () => {
 
   const hasConversation = conversation.length > 0;
 
+  const showPerformance = (performance: AiPerformance) => {
+    if (!performance) return;
+
+    showToast({
+      message: (
+        <>
+          Generation complete: Generated {performance.numTokens} tokens in{' '}
+          {(performance.totalTime / 1000).toFixed(2)} seconds.
+          {performance.tps.toFixed(2)} tokens per second
+        </>
+      ),
+      type: 'success',
+      duration: 15000,
+    });
+  };
+
   const handleSubmit = useCallback(
     async (text: string) => {
       if (!text.trim()) return;
 
       try {
-        await generateAnswer(text);
+        const result = await generateAnswer(text);
+        console.log(result);
+        showPerformance(result?.performance);
       } catch (error) {
         console.error('Error in chat submission:', error);
       }
@@ -40,39 +56,12 @@ const ChatTab = () => {
   const handleRegenerate = useCallback(
     (messageIndex: number) => {
       if (status !== AiStatus.GENERATING && status !== AiStatus.LOADING) {
-        regenerateAnswer(messageIndex);
+        const result = regenerateAnswer(messageIndex);
+        showPerformance(result.performance);
       }
     },
     [status, regenerateAnswer]
   );
-
-  const lastReportedPerformance = useRef({ numTokens: 0, totalTime: 0 });
-
-  useEffect(() => {
-    if (
-      status === AiStatus.IDLE &&
-      performance.numTokens > 0 &&
-      (performance.numTokens !== lastReportedPerformance.current.numTokens ||
-        performance.totalTime !== lastReportedPerformance.current.totalTime)
-    ) {
-      showToast({
-        message: (
-          <>
-            Generation complete: Generated {performance.numTokens} tokens in{' '}
-            {(performance.totalTime / 1000).toFixed(2)} seconds.
-            {performance.tps.toFixed(2)} tokens per second
-          </>
-        ),
-        type: 'success',
-        duration: 5000,
-      });
-
-      lastReportedPerformance.current = {
-        numTokens: performance.numTokens,
-        totalTime: performance.totalTime,
-      };
-    }
-  }, [status, performance]);
 
   return (
     <section
