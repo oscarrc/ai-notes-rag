@@ -87,20 +87,14 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           break;
 
         case 'EMBEDDING_PROGRESS':
-          // Update the ref directly to avoid dependency issues
           embeddingProgressRef.current = data.progress;
-          // Trigger a re-render if needed by using a dummy state update
           setStatus((prev) => prev);
-          // Check if both models are ready
           checkModelsReady();
           break;
 
         case 'GENERATION_PROGRESS':
-          // Update the ref directly to avoid dependency issues
           generationProgressRef.current = data.progress;
-          // Trigger a re-render if needed by using a dummy state update
           setStatus((prev) => prev);
-          // Check if both models are ready
           checkModelsReady();
           break;
 
@@ -319,13 +313,11 @@ MY QUESTION: ${question}`,
     setConversation((c) => {
       const newHistory = [...c];
 
-      // Determine which message to update
       const targetIndex =
         regeneratingIndex.current !== null
           ? regeneratingIndex.current
           : newHistory.length - 1;
 
-      // Ensure there's a message to update at the target index
       if (
         targetIndex >= 0 &&
         targetIndex < newHistory.length &&
@@ -334,16 +326,13 @@ MY QUESTION: ${question}`,
         const targetMessage = newHistory[targetIndex];
 
         if (typeof targetMessage.content === 'string') {
-          // Simple case - append to the existing string
           newHistory[targetIndex] = {
             ...targetMessage,
             content: targetMessage.content + text,
           };
         } else if (Array.isArray(targetMessage.content)) {
-          // We're dealing with an array of responses
           const contentArray = [...targetMessage.content];
 
-          // Check if the last item is our streaming placeholder (empty string)
           if (
             contentArray.length > 0 &&
             contentArray[contentArray.length - 1] === ''
@@ -402,7 +391,7 @@ MY QUESTION: ${question}`,
 
         // Create the chat messages array using the helper function
         const chatMessages = createChatMessages(notes, question);
-        console.log({ chatMessages });
+
         setConversation((c) => {
           const newHistory = [...c];
 
@@ -576,7 +565,6 @@ MY QUESTION: ${question}`,
       fetchEmbeddings,
       saveEmbeddings,
       generationModel,
-      // Expose the ref values as normal properties
       generationProgress: generationProgressRef.current,
       setGenerationModel,
       generateAnswer,
