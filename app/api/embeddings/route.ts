@@ -49,7 +49,7 @@ export async function PUT(req: Request) {
     const results = await table
       .search(data)
       .distanceType("cosine")
-      .distanceRange(0, 0.8)
+      .distanceRange(0, 0.65)
       .limit(5)
       .toArray();
 
