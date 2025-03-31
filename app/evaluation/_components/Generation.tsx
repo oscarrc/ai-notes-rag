@@ -12,6 +12,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import {
+  NameType,
+  ValueType,
+} from 'recharts/types/component/DefaultTooltipContent';
 import { VscDebugStart, VscInfo } from 'react-icons/vsc';
 import { useEffect, useState } from 'react';
 
@@ -207,17 +211,11 @@ const Generation = () => {
     });
   };
 
-  function formatMemoryUsage(totalJSHeapSize: number): string {
-    if (totalJSHeapSize < 1024) {
-      return `${totalJSHeapSize} B`;
-    } else if (totalJSHeapSize < 1024 * 1024) {
-      return `${(totalJSHeapSize / 1024).toFixed(2)} KB`;
-    } else if (totalJSHeapSize < 1024 * 1024 * 1024) {
-      return `${(totalJSHeapSize / (1024 * 1024)).toFixed(2)} MB`;
-    } else {
-      return `${(totalJSHeapSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
-    }
-  }
+  const valueFormatter = (value: ValueType, name: NameType) => {
+    if ((name as string).includes('Time')) return formatTime(value as number);
+    if (name === 'Tokens/sec') return (value as number).toFixed(2);
+    return value;
+  };
 
   return (
     <div className='flex flex-col gap-6'>
@@ -329,16 +327,7 @@ const Generation = () => {
                   <XAxis dataKey='id' />
                   <YAxis yAxisId='left' orientation='left' stroke='#8884d8' />
                   <YAxis yAxisId='right' orientation='right' stroke='#82ca9d' />
-                  <Tooltip
-                    formatter={(value, name) => {
-                      if (
-                        name === 'generationTime' ||
-                        name === 'processingTime'
-                      )
-                        return formatTime(value as number);
-                      return value;
-                    }}
-                  />
+                  <Tooltip formatter={valueFormatter} />
                   <Legend />
                   <Line
                     yAxisId='right'
@@ -407,14 +396,7 @@ const Generation = () => {
                   <YAxis yAxisId='left' orientation='left' stroke='#8884d8' />
                   <YAxis yAxisId='right' orientation='right' stroke='#82ca9d' />
                   <Tooltip
-                    formatter={(value, name) => {
-                      if (
-                        name === 'processingTime' ||
-                        name === 'generationTime'
-                      )
-                        return formatTime(value as number);
-                      return value;
-                    }}
+                    formatter={valueFormatter}
                     labelFormatter={(value) => `Category: ${value}`}
                   />
                   <Legend />

@@ -12,6 +12,10 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
+import {
+  NameType,
+  ValueType,
+} from 'recharts/types/component/DefaultTooltipContent';
 import { VscDebugStart, VscInfo } from 'react-icons/vsc';
 import { formatPercent, formatTime } from '../_utils/format';
 import { useEffect, useState } from 'react';
@@ -241,6 +245,13 @@ const Embeddings = () => {
     });
   };
 
+  const valueFormatter = (value: ValueType, name: NameType) => {
+    if (name === 'Avg Response Time') return formatTime(value as number);
+    if (['Precision', 'Recall', 'F1 Score'].includes(name as string))
+      return formatPercent(value as number);
+    return value;
+  };
+
   return (
     <div className='flex flex-col gap-6'>
       {/* Overall stats */}
@@ -348,18 +359,7 @@ const Embeddings = () => {
                   <XAxis dataKey='id' />
                   <YAxis yAxisId='left' orientation='left' stroke='#8884d8' />
                   <YAxis yAxisId='right' orientation='right' stroke='#82ca9d' />
-                  <Tooltip
-                    formatter={(value, name) => {
-                      if (name === 'time') return formatTime(value as number);
-                      if (
-                        ['precision', 'recall', 'f1Score'].includes(
-                          name as string
-                        )
-                      )
-                        return formatPercent(value as number);
-                      return value;
-                    }}
-                  />
+                  <Tooltip formatter={valueFormatter} />
                   <Legend />
                   <Line
                     yAxisId='right'
@@ -436,16 +436,7 @@ const Embeddings = () => {
                     domain={[0, 1]}
                   />
                   <Tooltip
-                    formatter={(value, name) => {
-                      if (name === 'time') return formatTime(value as number);
-                      if (
-                        ['precision', 'recall', 'f1Score'].includes(
-                          name as string
-                        )
-                      )
-                        return formatPercent(value as number);
-                      return value;
-                    }}
+                    formatter={valueFormatter}
                     labelFormatter={(value) => `Category: ${value}`}
                   />
                   <Legend />
