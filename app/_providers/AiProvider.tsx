@@ -9,10 +9,6 @@ import {
   useState,
 } from 'react';
 
-import { UndefinedInitialDataOptions } from '@tanstack/react-query';
-import { clear } from 'console';
-import { send } from 'process';
-
 export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
 export const GENERATION_MODELS = [
   'Llama-3.2-1B-Instruct-finetuned',
