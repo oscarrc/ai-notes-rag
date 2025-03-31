@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { UndefinedInitialDataOptions } from '@tanstack/react-query';
+import { clear } from 'console';
 import { send } from 'process';
 
 export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
@@ -47,6 +48,10 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   // Use refs for progress tracking to avoid dependency cycles
   const embeddingProgressRef = useRef(0);
   const generationProgressRef = useRef(0);
+
+  const clearConversation = () => {
+    setConversation([]);
+  };
 
   // Calculate the combined progress without dependencies
   const progress = useMemo((): number => {
@@ -587,6 +592,7 @@ MY QUESTION: ${question}`,
       conversation,
       status,
       progress,
+      clearConversation,
       generateAnswer,
       regenerateAnswer,
       getNotes,
