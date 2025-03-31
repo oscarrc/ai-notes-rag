@@ -239,7 +239,7 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       
     case 'STOP_GENERATION':
       stopping_criteria.interrupt();
-      self.postMessage({ type: 'GENERATION_STOPPED', id });
+      self.postMessage({ type: 'GENERATION_STOPPED', success: true, id });
       break;
       
     default:
