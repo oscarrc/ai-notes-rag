@@ -191,13 +191,14 @@ const Generation = () => {
     runTest();
   }, [runGenerationTests, loading, generationProgress, status]);
 
-  const handleStopTests = () => {
-    clearConversation();
+  const handleStopTests = async () => {
     setGenerationResults([]);
     setGenerationProgress(0);
     setRunGenerationTests(false);
     setLoading(false);
-    stopGeneration();
+
+    await stopGeneration();
+    clearConversation();
   };
 
   // Reset test handlers

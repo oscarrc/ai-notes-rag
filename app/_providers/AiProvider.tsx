@@ -374,8 +374,8 @@ MY QUESTION: ${question}`,
     });
   }, []);
 
-  const stopGeneration = () => {
-    sendToWorker('STOP_GENERATION', {});
+  const stopGeneration = async () => {
+    return sendToWorker('STOP_GENERATION', {});
   };
 
   const generateAnswer = useCallback(
