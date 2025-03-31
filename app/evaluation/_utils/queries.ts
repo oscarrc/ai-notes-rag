@@ -84,7 +84,7 @@ export const testQueries = [
   },
   {
     query: 'What benefits does IoT provide in healthcare based on the notes?',
-    relevantDocIds: ['/vault/New File (1).md'],
+    relevantDocIds: ['/vault/IoT.md'],
     category: 'inferential',
   },
   {
@@ -107,7 +107,7 @@ export const testQueries = [
   {
     query:
       'What are the limitations of using pgvectors according to the notes?',
-    relevantDocIds: ['/vault/New File.md'],
+    relevantDocIds: ['/vault/pg_vectors.md'],
     category: 'inferential',
   },
   {
