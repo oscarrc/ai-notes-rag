@@ -80,6 +80,21 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, []);
 
+  const receiveFromWorker = useCallback(
+    (id: string, data: { success: any; error: string | undefined }) => {
+      if (id && pendingRequests.current.has(id)) {
+        const { resolve, reject } = pendingRequests.current.get(id)!;
+        if (data?.success) {
+          resolve(true);
+        } else {
+          reject(new Error(data?.error));
+        }
+        pendingRequests.current.delete(id);
+      }
+    },
+    []
+  );
+
   useEffect(() => {
     if (status === AiStatus.IDLE && regeneratingIndex.current !== null) {
       regeneratingIndex.current = null;
@@ -103,6 +118,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
 
         case 'EMBEDDER_INITIALIZED':
         case 'GENERATOR_INITIALIZED':
+          receiveFromWorker(id, data);
           if (data.success) {
             checkModelsReady();
           } else {
@@ -150,10 +166,8 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
 
         case 'GENERATION_STOPPED':
           setStatus(AiStatus.IDLE);
-          if (id && pendingRequests.current.has(id)) {
-            const { resolve, reject } = pendingRequests.current.get(id)!;
-            resolve(true);
-          }
+          receiveFromWorker(id, data);
+          pendingRequests.current.delete(id);
           break;
 
         case 'EMBEDDINGS_RESULT':
@@ -169,12 +183,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           break;
 
         case 'ERROR':
-          console.error('Worker error:', data.error);
-          if (id && pendingRequests.current.has(id)) {
-            const { reject } = pendingRequests.current.get(id)!;
-            reject(new Error(data.error));
-            pendingRequests.current.delete(id);
-          }
+          receiveFromWorker(id, data);
           break;
       }
     };

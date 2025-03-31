@@ -5,6 +5,8 @@ import {
   BarChart,
   CartesianGrid,
   Legend,
+  Line,
+  LineChart,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -334,7 +336,76 @@ const Embeddings = () => {
 
       <div className='card bg-base-200'>
         <div className='card-body'>
-          <h2 className='card-title'>Semantic Search Performance</h2>
+          <h2 className='card-title'>Overall Performance</h2>
+          <div className='flex h-80 w-full flex-col gap-8'>
+            {embeddingsResults.length > 0 ? (
+              <ResponsiveContainer width='100%' height='100%'>
+                <LineChart
+                  data={embeddingsResults}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray='3 3' />
+                  <XAxis dataKey='id' />
+                  <YAxis yAxisId='left' orientation='left' stroke='#8884d8' />
+                  <YAxis yAxisId='right' orientation='right' stroke='#82ca9d' />
+                  <Tooltip
+                    formatter={(value, name) => {
+                      if (name === 'time') return formatTime(value as number);
+                      if (
+                        ['precision', 'recall', 'f1Score'].includes(
+                          name as string
+                        )
+                      )
+                        return formatPercent(value as number);
+                      return value;
+                    }}
+                  />
+                  <Legend />
+                  <Line
+                    yAxisId='right'
+                    type='monotone'
+                    dataKey='time'
+                    name='Time'
+                    stroke='#8884d8'
+                  />
+                  <Line
+                    yAxisId='left'
+                    type='monotone'
+                    dataKey='precision'
+                    name='Precision'
+                    stroke='#82ca9d'
+                  />
+                  <Line
+                    yAxisId='left'
+                    type='monotone'
+                    dataKey='recall'
+                    name='Recall'
+                    stroke='#ffc658'
+                  />
+                  <Line
+                    yAxisId='left'
+                    type='monotone'
+                    dataKey='f1Score'
+                    name='F1 Score'
+                    stroke='#ff8042'
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className='flex h-full w-full items-center justify-center'>
+                <div className='flex flex-col items-center gap-4 text-base-content/50'>
+                  <VscInfo className='h-12 w-12' />
+                  <p>Run tests to see results</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className='card bg-base-200'>
+        <div className='card-body'>
+          <h2 className='card-title'>Performance by category</h2>
           <div className='h-80 w-full'>
             {embeddingStats.byCategory ? (
               <ResponsiveContainer width='100%' height='100%'>

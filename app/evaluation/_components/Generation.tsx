@@ -65,20 +65,20 @@ const Generation = () => {
       });
 
       const start = Date.now();
-      const t = await generateAnswer(testQueries[generationProgress].query);
+      const { performance } = await generateAnswer(
+        testQueries[generationProgress].query
+      );
 
       const end = Date.now();
-      console.log(t);
-      const performance = t.performance || {};
 
       const result = {
         id: generationProgress,
         query: testQueries[generationProgress].query,
         category: testQueries[generationProgress].category,
         processingTime: end - start,
-        numTokens: performance.numTokens || 0,
-        tps: performance.tps || 0,
-        generationTime: performance.totalTime || 0,
+        numTokens: performance?.numTokens || 0,
+        tps: performance?.tps || 0,
+        generationTime: performance?.totalTime || 0,
       };
 
       setLoading(false);
@@ -207,6 +207,18 @@ const Generation = () => {
     });
   };
 
+  function formatMemoryUsage(totalJSHeapSize: number): string {
+    if (totalJSHeapSize < 1024) {
+      return `${totalJSHeapSize} B`;
+    } else if (totalJSHeapSize < 1024 * 1024) {
+      return `${(totalJSHeapSize / 1024).toFixed(2)} KB`;
+    } else if (totalJSHeapSize < 1024 * 1024 * 1024) {
+      return `${(totalJSHeapSize / (1024 * 1024)).toFixed(2)} MB`;
+    } else {
+      return `${(totalJSHeapSize / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+    }
+  }
+
   return (
     <div className='flex flex-col gap-6'>
       <div className='flex flex-wrap gap-4'>
@@ -305,7 +317,7 @@ const Generation = () => {
 
       <div className='card bg-base-200'>
         <div className='card-body'>
-          <h2 className='card-title'>Generation Performance</h2>
+          <h2 className='card-title'>Overall Performance</h2>
           <div className='flex h-80 w-full flex-col gap-8'>
             {generationResults.length > 0 ? (
               <ResponsiveContainer width='100%' height='100%'>
@@ -329,7 +341,7 @@ const Generation = () => {
                   />
                   <Legend />
                   <Line
-                    yAxisId='left'
+                    yAxisId='right'
                     type='monotone'
                     dataKey='tps'
                     name='Tokens/sec'
@@ -373,7 +385,7 @@ const Generation = () => {
       {/* Generation Performance by Category Chart */}
       <div className='card mt-6 bg-base-200'>
         <div className='card-body'>
-          <h2 className='card-title'>Generation Performance by Category</h2>
+          <h2 className='card-title'>Performance by Category</h2>
           <div className='h-80 w-full'>
             {generationStats.byCategory &&
             Object.keys(generationStats.byCategory).length > 0 ? (
@@ -425,7 +437,7 @@ const Generation = () => {
                     fill='#ffc658'
                   />
                   <Bar
-                    yAxisId='left'
+                    yAxisId='right'
                     dataKey='tps'
                     name='Tokens/sec'
                     fill='#ff8042'
