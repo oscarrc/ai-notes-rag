@@ -131,7 +131,7 @@ describe('AiProvider', () => {
     expect(getByTestId('status').textContent).toBe(AiStatus.IDLE);
     expect(getByTestId('embedding-model').textContent).toBe('all-MiniLM-L6-v2');
     expect(getByTestId('generation-model').textContent).toBe(
-      'Llama-3.2-1B-Instruct-q4f16'
+      'Llama-3.2-1B-Instruct-finetuned'
     );
   });
 
