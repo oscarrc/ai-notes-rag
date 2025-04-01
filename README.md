@@ -1,6 +1,7 @@
 # AI Notes: A RAG-Driven AI-Powered Personal Knowledge Base
 
-[![Build and Push Docker Image](https://github.com/oscarrc/ai-notes-rag/actions/workflows/build.yml/badge.svg)](https://github.com/oscarrc/ai-notes-rag/actions/workflows/build.yml)
+[![Tests](https://github.com/oscarrc/ai-notes-rag/actions/workflows/test.yml/badge.svg)](https://github.com/oscarrc/ai-notes-rag/actions/workflows/test.yml)
+[![Build](https://github.com/oscarrc/ai-notes-rag/actions/workflows/build.yml/badge.svg)](https://github.com/oscarrc/ai-notes-rag/actions/workflows/build.yml)
 
 ## Overview
 
