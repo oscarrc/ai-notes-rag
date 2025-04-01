@@ -28,7 +28,8 @@ const ChatTab = () => {
     showToast({
       message: (
         <>
-          Generation complete: Generated {performance.numTokens} tokens in{' '}
+          Generation complete: <br />
+          Generated {performance.numTokens} tokens in{' '}
           {(performance.totalTime / 1000).toFixed(2)} seconds. <br />
           {performance.tps.toFixed(2)} tokens per second. <br />
           Time to first token: {(performance.ttf / 1000).toFixed(2)} seconds.
