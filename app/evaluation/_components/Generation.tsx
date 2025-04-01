@@ -33,23 +33,23 @@ const Generation = () => {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [runGenerationTests, setRunGenerationTests] = useState(false);
   const [generationStats, setGenerationStats] = useState<{
-    avgProcessingTime: number;
     avgGenerationTime: number;
     avgTps: number;
+    avgTtf: number;
     avgTokens: number;
     byCategory?: Record<
       string,
       {
-        avgProcessingTime: number;
         avgGenerationTime: number;
         avgTps: number;
+        avgTtf: number;
         avgTokens: number;
         count: number;
       }
     >;
   }>({
-    avgProcessingTime: 0,
     avgGenerationTime: 0,
+    avgTtf: 0,
     avgTps: 0,
     avgTokens: 0,
     byCategory: {},
@@ -68,22 +68,19 @@ const Generation = () => {
         duration: 2000,
       });
 
-      const start = Date.now();
       const response = await generateAnswer(
         testQueries[generationProgress].query
       );
 
       const performance = response?.performance;
 
-      const end = Date.now();
-
       const result = {
         id: generationProgress,
         query: testQueries[generationProgress].query,
         category: testQueries[generationProgress].category,
-        processingTime: end - start,
         numTokens: performance?.numTokens || 0,
         tps: performance?.tps || 0,
+        ttf: performance?.ttf || 0,
         generationTime: performance?.totalTime || 0,
       };
 
@@ -104,14 +101,14 @@ const Generation = () => {
   useEffect(() => {
     if (generationResults.length === 0) return;
 
-    const avgProcessingTime =
-      generationResults.reduce((sum, r) => sum + r.processingTime, 0) /
-      generationResults.length;
     const avgGenerationTime =
       generationResults.reduce((sum, r) => sum + r.generationTime, 0) /
       generationResults.length;
     const avgTps =
       generationResults.reduce((sum, r) => sum + r.tps, 0) /
+      generationResults.length;
+    const avgTtf =
+      generationResults.reduce((sum, r) => sum + r.ttf, 0) /
       generationResults.length;
     const avgTokens =
       generationResults.reduce((sum, r) => sum + r.numTokens, 0) /
@@ -133,23 +130,22 @@ const Generation = () => {
       (stats, [category, results]) => {
         if (results.length === 0) return stats;
 
-        const categoryAvgProcessingTime =
-          results.reduce((sum, r) => sum + r.processingTime, 0) /
-          results.length;
         const categoryAvgGenerationTime =
           results.reduce((sum, r) => sum + r.generationTime, 0) /
           results.length;
         const categoryAvgTps =
           results.reduce((sum, r) => sum + r.tps, 0) / results.length;
+        const categoryAvgTtf =
+          results.reduce((sum, r) => sum + r.ttf, 0) / results.length;
         const categoryAvgTokens =
           results.reduce((sum, r) => sum + r.numTokens, 0) / results.length;
 
         return {
           ...stats,
           [category]: {
-            avgProcessingTime: categoryAvgProcessingTime,
             avgGenerationTime: categoryAvgGenerationTime,
             avgTps: categoryAvgTps,
+            avgTtf: categoryAvgTtf,
             avgTokens: categoryAvgTokens,
             count: results.length,
           },
@@ -159,8 +155,8 @@ const Generation = () => {
     );
 
     setGenerationStats({
-      avgProcessingTime,
       avgGenerationTime,
+      avgTtf,
       avgTps,
       avgTokens,
       byCategory: categoryStats,
@@ -218,7 +214,8 @@ const Generation = () => {
 
   const valueFormatter = (value: ValueType, name: NameType) => {
     if ((name as string).includes('Time')) return formatTime(value as number);
-    if (name === 'Tokens/sec') return (value as number).toFixed(2);
+    if (name === 'Tokens/sec' || name === 'Delay')
+      return (value as number).toFixed(2);
     return value;
   };
 
@@ -227,18 +224,18 @@ const Generation = () => {
       <div className='flex flex-wrap gap-4'>
         <div className='stats w-full shadow'>
           <div className='stat'>
-            <div className='stat-title'>Average Processing Time</div>
-            <div className='stat-value'>
-              {formatTime(generationStats.avgProcessingTime)}
-            </div>
-            <div className='stat-desc'>Total Processing time</div>
-          </div>
-          <div className='stat'>
             <div className='stat-title'>Average Generation Time</div>
             <div className='stat-value'>
               {formatTime(generationStats.avgGenerationTime)}
             </div>
             <div className='stat-desc'>Model Generation Time</div>
+          </div>
+          <div className='stat'>
+            <div className='stat-title'>Avg. Delay</div>
+            <div className='stat-value'>
+              {formatTime(generationStats.avgTtf)}
+            </div>
+            <div className='stat-desc'>Time to first token</div>
           </div>
           <div className='stat'>
             <div className='stat-title'>Avg. Tokens</div>
@@ -294,8 +291,8 @@ const Generation = () => {
                 <tr>
                   <th>Category</th>
                   <th>Count</th>
-                  <th>Processing Time</th>
                   <th>Generation Time</th>
+                  <th>Delay</th>
                   <th>Tokens</th>
                   <th>Speed (tokens/s)</th>
                 </tr>
@@ -306,8 +303,8 @@ const Generation = () => {
                     <tr key={category}>
                       <td className='font-medium capitalize'>{category}</td>
                       <td>{stats.count}</td>
-                      <td>{formatTime(stats.avgProcessingTime)}</td>
                       <td>{formatTime(stats.avgGenerationTime)}</td>
+                      <td>{formatTime(stats.avgTtf)}</td>
                       <td>{stats.avgTokens.toFixed(0)}</td>
                       <td>{stats.avgTps.toFixed(1)}</td>
                     </tr>
@@ -339,28 +336,28 @@ const Generation = () => {
                     type='monotone'
                     dataKey='tps'
                     name='Tokens/sec'
-                    stroke='#8884d8'
+                    stroke='#ff8042'
                   />
                   <Line
                     yAxisId='right'
                     type='monotone'
                     dataKey='numTokens'
                     name='Tokens'
-                    stroke='#82ca9d'
+                    stroke='#ffc658'
                   />
                   <Line
                     yAxisId='left'
                     type='monotone'
                     dataKey='generationTime'
                     name='Generation Time'
-                    stroke='#ffc658'
+                    stroke='#82ca9d'
                   />
                   <Line
                     yAxisId='left'
                     type='monotone'
-                    dataKey='processingTime'
-                    name='Processing Time'
-                    stroke='#ff8042'
+                    dataKey='ttf'
+                    name='Delay'
+                    stroke='#82caff'
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -388,10 +385,10 @@ const Generation = () => {
                   data={Object.entries(generationStats.byCategory).map(
                     ([category, stats]) => ({
                       category,
-                      processingTime: stats.avgProcessingTime,
                       generationTime: stats.avgGenerationTime,
                       tokens: stats.avgTokens,
                       tps: stats.avgTps,
+                      ttf: stats.avgTtf,
                     })
                   )}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
@@ -407,15 +404,15 @@ const Generation = () => {
                   <Legend />
                   <Bar
                     yAxisId='left'
-                    dataKey='processingTime'
-                    name='Processing Time'
-                    fill='#8884d8'
-                  />
-                  <Bar
-                    yAxisId='left'
                     dataKey='generationTime'
                     name='Generation Time'
                     fill='#82ca9d'
+                  />
+                  <Bar
+                    yAxisId='left'
+                    dataKey='ttf'
+                    name='Delay'
+                    fill='#82caff'
                   />
                   <Bar
                     yAxisId='right'
@@ -452,7 +449,7 @@ const Generation = () => {
                 <th>Category</th>
                 <th>Query</th>
                 <th>Generation Time</th>
-                <th>Processing Time</th>
+                <th>Delay</th>
                 <th>Tokens</th>
                 <th>Speed (tokens/s)</th>
               </tr>
@@ -464,7 +461,7 @@ const Generation = () => {
                   <td className='capitalize'>{result.category}</td>
                   <td className='max-w-md truncate'>{result.query}</td>
                   <td>{formatTime(result.generationTime)}</td>
-                  <td>{formatTime(result.processingTime)}</td>
+                  <td>{formatTime(result.ttf)}</td>
                   <td>{result.numTokens}</td>
                   <td>{result.tps.toFixed(1)}</td>
                 </tr>

@@ -53,6 +53,7 @@ interface Toast {
 }
 
 interface AiPerformance {
+  ttf: number;
   tps: number;
   numTokens: number;
   totalTime: number;

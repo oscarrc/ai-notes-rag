@@ -41,6 +41,9 @@ let stopping_criteria = new InterruptableStoppingCriteria();
 // Status tracking
 let embeddingProgress: number = 0;
 let generationProgress: number = 0;
+
+// Performance tracking
+let ttf: number = 0;
 let tps: number = 0;
 let numTokens: number = 0;
 let startTime: number | null = null;
@@ -104,6 +107,7 @@ async function initGenerator(generationModel: string): Promise<{success: boolean
       token_callback_function: () => {
         startTime = startTime ?? performance.now();
         numTokens += 1;
+        ttf = ttf === 0 ? performance.now() - startTime : ttf;
         tps = (numTokens / (performance.now() - startTime)) * 1000;        
       },
     });
@@ -144,6 +148,7 @@ async function generateAnswer(messages: any[]): Promise<{success: boolean, respo
     return_dict: true,
   });
 
+  ttf = 0;
   tps = 0;
   numTokens = 0;
   startTime = performance.now();
@@ -170,6 +175,7 @@ async function generateAnswer(messages: any[]): Promise<{success: boolean, respo
     response: response[0] || '',
     success: true,
     performance: {
+      ttf,
       tps,
       numTokens,
       totalTime: performance.now() - startTime,

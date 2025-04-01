@@ -29,8 +29,9 @@ const ChatTab = () => {
       message: (
         <>
           Generation complete: Generated {performance.numTokens} tokens in{' '}
-          {(performance.totalTime / 1000).toFixed(2)} seconds.
-          {performance.tps.toFixed(2)} tokens per second
+          {(performance.totalTime / 1000).toFixed(2)} seconds. <br />
+          {performance.tps.toFixed(2)} tokens per second. <br />
+          Time to first token: {(performance.ttf / 1000).toFixed(2)} seconds.
         </>
       ),
       type: 'success',
