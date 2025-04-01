@@ -69,9 +69,11 @@ const Generation = () => {
       });
 
       const start = Date.now();
-      const { performance } = await generateAnswer(
+      const response = await generateAnswer(
         testQueries[generationProgress].query
       );
+
+      const performance = response?.performance;
 
       const end = Date.now();
 
