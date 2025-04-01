@@ -62,8 +62,8 @@ const ChatInput = ({
         )}
       </form>
       <p className='text-sm italic text-neutral'>
-        This chat is powered by AI. Please verify the information before using
-        it.
+        This chat uses AI and your notes to answer your questions. Please verify
+        the responses.
       </p>
     </div>
   );
