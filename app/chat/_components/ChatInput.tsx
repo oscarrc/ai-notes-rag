@@ -36,28 +36,36 @@ const ChatInput = ({
   };
 
   return (
-    <form
-      className={`textarea flex w-full max-w-2xl items-center gap-4 rounded-box bg-base-200 pr-2 ${className ?? ''}`}
-      onSubmit={handleSubmit}
+    <div
+      className={`flex w-full max-w-2xl flex-col gap-2 bg-base-100 p-2 ${className}`}
     >
-      <textarea
-        placeholder='Send a message'
-        autoFocus
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={handleKeyDown}
-        className='h-24 flex-1 resize-none bg-transparent focus-visible:outline-none'
-      />
-      {isGenerating ? (
-        <ButtonSquare size='md' className='btn-neutral self-end'>
-          <VscDebugStop className='h-6 w-6' />
-        </ButtonSquare>
-      ) : (
-        <ButtonSquare size='md' className='btn-neutral self-end'>
-          <VscSend className='h-6 w-6' />
-        </ButtonSquare>
-      )}
-    </form>
+      <form
+        className='textarea flex w-full items-center gap-4 rounded-box bg-base-200 p-2'
+        onSubmit={handleSubmit}
+      >
+        <textarea
+          placeholder='Send a message'
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className='h-24 flex-1 resize-none bg-transparent focus-visible:outline-none'
+        />
+        {isGenerating ? (
+          <ButtonSquare size='md' className='btn-neutral self-end'>
+            <VscDebugStop className='h-6 w-6' />
+          </ButtonSquare>
+        ) : (
+          <ButtonSquare size='md' className='btn-neutral self-end'>
+            <VscSend className='h-6 w-6' />
+          </ButtonSquare>
+        )}
+      </form>
+      <p className='text-sm italic text-neutral'>
+        This chat is powered by AI. Please verify the information before using
+        it.
+      </p>
+    </div>
   );
 };
 
