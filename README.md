@@ -1,5 +1,7 @@
 # AI Notes: A RAG-Driven AI-Powered Personal Knowledge Base
 
+[![Build and Push Docker Image](https://github.com/oscarrc/ai-notes-rag/actions/workflows/build.yml/badge.svg)](https://github.com/oscarrc/ai-notes-rag/actions/workflows/build.yml)
+
 ## Overview
 
 **AI Notes** is a self-hostable, markdown-based note-taking web application designed to provide users with a privacy-focused, AI-powered knowledge management system. The application integrates **Retrieval-Augmented Generation (RAG)** and **semantic search** capabilities, allowing users to interact with their notes using an AI chatbot that generates responses based on stored content. The system is optimized for in-browser execution using **Small Language Models (SLMs)** and lightweight vector databases, ensuring efficient and secure knowledge retrieval without relying on cloud-based services.
