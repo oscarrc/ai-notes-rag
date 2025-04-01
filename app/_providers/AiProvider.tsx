@@ -35,11 +35,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const pendingRequests = useRef<Map<string, PendingRequest>>(new Map());
 
   const [status, setStatus] = useState<AiStatus>(AiStatus.IDLE);
-  const [performance, setPerformance] = useState<AiPerformance>({
-    tps: 0,
-    numTokens: 0,
-    totalTime: 0,
-  });
   const [embeddingModel, setEmbeddingModel] = useState(EMBEDDING_MODELS[0]);
   const [generationModel, setGenerationModel] = useState(GENERATION_MODELS[0]);
   const [conversation, setConversation] = useState<HistoryMessage[]>([]);
@@ -50,138 +45,14 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const embeddingProgressRef = useRef(0);
   const generationProgressRef = useRef(0);
 
+  const clearConversation = () => {
+    setConversation([]);
+  };
+
   // Calculate the combined progress without dependencies
   const progress = useMemo((): number => {
     return (embeddingProgressRef.current + generationProgressRef.current) / 2;
   }, []);
-
-  useEffect(() => {
-    if (status === AiStatus.IDLE && regeneratingIndex.current !== null) {
-      regeneratingIndex.current = null;
-    }
-  }, [status]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const worker = new Worker(
-      new URL('../_workers/aiWorker.ts', import.meta.url),
-      { type: 'module' }
-    );
-
-    worker.onmessage = (event) => {
-      const { type, id, ...data } = event.data;
-      switch (type) {
-        case 'WORKER_READY':
-          console.log('AI worker is ready');
-          break;
-
-        case 'EMBEDDER_INITIALIZED':
-        case 'GENERATOR_INITIALIZED':
-          if (data.success) {
-            checkModelsReady();
-          } else {
-            setStatus(AiStatus.ERROR);
-            console.error(`Model initialization failed: ${data.error}`);
-          }
-          break;
-
-        case 'EMBEDDING_PROGRESS':
-          // Update the ref directly to avoid dependency issues
-          embeddingProgressRef.current = data.progress;
-          // Trigger a re-render if needed by using a dummy state update
-          setStatus((prev) => prev);
-          // Check if both models are ready
-          checkModelsReady();
-          break;
-
-        case 'GENERATION_PROGRESS':
-          // Update the ref directly to avoid dependency issues
-          generationProgressRef.current = data.progress;
-          // Trigger a re-render if needed by using a dummy state update
-          setStatus((prev) => prev);
-          // Check if both models are ready
-          checkModelsReady();
-          break;
-
-        case 'STATUS_UPDATE':
-          setStatus(data.status);
-          break;
-
-        case 'STREAM_RESPONSE':
-          streamResponse(data.text);
-          break;
-
-        case 'PERFORMANCE_UPDATE':
-          const { tps, numTokens, totalTime } = data;
-          setPerformance({ tps, numTokens, totalTime });
-          break;
-
-        case 'GENERATION_COMPLETE':
-          setStatus(AiStatus.IDLE);
-          regeneratingIndex.current = null;
-          break;
-
-        case 'EMBEDDINGS_RESULT':
-          if (id && pendingRequests.current.has(id)) {
-            const { resolve, reject } = pendingRequests.current.get(id)!;
-            if (data.success) {
-              resolve(data.embeddings);
-            } else {
-              reject(new Error(data.error));
-            }
-            pendingRequests.current.delete(id);
-          }
-          break;
-
-        case 'ERROR':
-          console.error('Worker error:', data.error);
-          if (id && pendingRequests.current.has(id)) {
-            const { reject } = pendingRequests.current.get(id)!;
-            reject(new Error(data.error));
-            pendingRequests.current.delete(id);
-          }
-          break;
-      }
-    };
-
-    workerRef.current = worker;
-
-    initEmbedder();
-    initGenerator();
-
-    return () => {
-      worker.terminate();
-      workerRef.current = null;
-    };
-  }, []);
-
-  const checkModelsReady = useCallback(() => {
-    if (
-      embeddingProgressRef.current === 100 &&
-      generationProgressRef.current === 100
-    ) {
-      setStatus(AiStatus.READY);
-    }
-  }, []);
-
-  const initEmbedder = useCallback(() => {
-    if (!workerRef.current) return;
-
-    workerRef.current.postMessage({
-      type: 'INIT_EMBEDDER',
-      payload: { embeddingModel },
-    });
-  }, [embeddingModel]);
-
-  const initGenerator = useCallback(() => {
-    if (!workerRef.current) return;
-
-    workerRef.current.postMessage({
-      type: 'INIT_GENERATOR',
-      payload: { generationModel },
-    });
-  }, [generationModel]);
 
   const sendToWorker = useCallback((type: string, payload: any) => {
     return new Promise((resolve, reject) => {
@@ -206,9 +77,145 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           reject(new Error('Worker request timeout'));
           pendingRequests.current.delete(id);
         }
-      }, 60000);
+      }, 120000);
     });
   }, []);
+
+  const receiveFromWorker = useCallback(
+    (id: string, data: { success: any; error: string | undefined }) => {
+      if (id && pendingRequests.current.has(id)) {
+        const { resolve, reject } = pendingRequests.current.get(id)!;
+        if (data?.success) {
+          resolve(true);
+        } else {
+          reject(new Error(data?.error));
+        }
+        pendingRequests.current.delete(id);
+      }
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (status === AiStatus.IDLE && regeneratingIndex.current !== null) {
+      regeneratingIndex.current = null;
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const worker = new Worker(
+      new URL('../_workers/aiWorker.ts', import.meta.url),
+      { type: 'module' }
+    );
+
+    worker.onmessage = (event) => {
+      const { type, id, ...data } = event.data;
+      switch (type) {
+        case 'WORKER_READY':
+          console.log('AI worker is ready');
+          break;
+
+        case 'EMBEDDER_INITIALIZED':
+        case 'GENERATOR_INITIALIZED':
+          receiveFromWorker(id, data);
+          if (data.success) {
+            checkModelsReady();
+          } else {
+            setStatus(AiStatus.ERROR);
+            console.error(`Model initialization failed: ${data.error}`);
+          }
+          break;
+
+        case 'EMBEDDING_PROGRESS':
+          embeddingProgressRef.current = data.progress;
+          setStatus((prev) => prev);
+          checkModelsReady();
+          break;
+
+        case 'GENERATION_PROGRESS':
+          generationProgressRef.current = data.progress;
+          setStatus((prev) => prev);
+          checkModelsReady();
+          break;
+
+        case 'STATUS_UPDATE':
+          setStatus(data.status);
+          break;
+
+        case 'STREAM_RESPONSE':
+          streamResponse(data.text);
+          break;
+
+        case 'GENERATION_COMPLETE':
+          setStatus(AiStatus.IDLE);
+          if (id && pendingRequests.current.has(id)) {
+            const { resolve, reject } = pendingRequests.current.get(id)!;
+            if (data.success) {
+              resolve({
+                response: data.response,
+                performance: data.performance,
+              });
+            } else {
+              reject(new Error(data.error));
+            }
+            pendingRequests.current.delete(id);
+          }
+          regeneratingIndex.current = null;
+          break;
+
+        case 'GENERATION_STOPPED':
+          setStatus(AiStatus.IDLE);
+          receiveFromWorker(id, data);
+          pendingRequests.current.delete(id);
+          break;
+
+        case 'EMBEDDINGS_RESULT':
+          if (id && pendingRequests.current.has(id)) {
+            const { resolve, reject } = pendingRequests.current.get(id)!;
+            if (data.success) {
+              resolve(data.embeddings);
+            } else {
+              reject(new Error(data.error));
+            }
+            pendingRequests.current.delete(id);
+          }
+          break;
+
+        case 'ERROR':
+          receiveFromWorker(id, data);
+          break;
+      }
+    };
+
+    workerRef.current = worker;
+
+    initEmbedder();
+    initGenerator();
+
+    return () => {
+      worker.terminate();
+      workerRef.current = null;
+    };
+  }, []);
+
+  const checkModelsReady = useCallback(() => {
+    if (
+      embeddingProgressRef.current === 100 &&
+      generationProgressRef.current === 100
+    ) {
+      setStatus(AiStatus.READY);
+    }
+  }, []);
+
+  const initEmbedder = useCallback(async () => {
+    return sendToWorker('INIT_EMBEDDER', { embeddingModel });
+  }, [embeddingModel]);
+
+  const initGenerator = useCallback(async () => {
+    return sendToWorker('INIT_GENERATOR', { generationModel });
+  }, [generationModel]);
 
   const getEmbeddings = useCallback(
     async (input: string): Promise<Embedding> => {
@@ -319,13 +326,11 @@ MY QUESTION: ${question}`,
     setConversation((c) => {
       const newHistory = [...c];
 
-      // Determine which message to update
       const targetIndex =
         regeneratingIndex.current !== null
           ? regeneratingIndex.current
           : newHistory.length - 1;
 
-      // Ensure there's a message to update at the target index
       if (
         targetIndex >= 0 &&
         targetIndex < newHistory.length &&
@@ -334,16 +339,13 @@ MY QUESTION: ${question}`,
         const targetMessage = newHistory[targetIndex];
 
         if (typeof targetMessage.content === 'string') {
-          // Simple case - append to the existing string
           newHistory[targetIndex] = {
             ...targetMessage,
             content: targetMessage.content + text,
           };
         } else if (Array.isArray(targetMessage.content)) {
-          // We're dealing with an array of responses
           const contentArray = [...targetMessage.content];
 
-          // Check if the last item is our streaming placeholder (empty string)
           if (
             contentArray.length > 0 &&
             contentArray[contentArray.length - 1] === ''
@@ -372,19 +374,17 @@ MY QUESTION: ${question}`,
     });
   }, []);
 
-  const stopGeneration = () => {
-    if (!workerRef.current) return;
-    workerRef.current.postMessage({ type: 'STOP_GENERATION' });
+  const stopGeneration = async () => {
+    return sendToWorker('STOP_GENERATION', {});
   };
 
   const generateAnswer = useCallback(
-    async (question: string) => {
+    async (question: string): Promise<Generation | undefined> => {
       if (!workerRef.current) return;
 
       regeneratingIndex.current = null;
 
       setConversation((c) => [...c, { role: 'user', content: question }]);
-      setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
 
       try {
         setStatus(AiStatus.LOADING);
@@ -402,7 +402,7 @@ MY QUESTION: ${question}`,
 
         // Create the chat messages array using the helper function
         const chatMessages = createChatMessages(notes, question);
-        console.log({ chatMessages });
+
         setConversation((c) => {
           const newHistory = [...c];
 
@@ -419,10 +419,9 @@ MY QUESTION: ${question}`,
           return newHistory;
         });
 
-        workerRef.current.postMessage({
-          type: 'GENERATE_ANSWER',
-          payload: { messages: chatMessages },
-        });
+        return sendToWorker('GENERATE_ANSWER', {
+          messages: chatMessages,
+        }) as Promise<Generation>;
       } catch (error) {
         console.error('Error during model execution:', error);
         setStatus(AiStatus.ERROR);
@@ -440,7 +439,7 @@ MY QUESTION: ${question}`,
 
   // Modified regenerateAnswer function
   const regenerateAnswer = useCallback(
-    async (messageIndex: number) => {
+    async (messageIndex: number): Promise<Generation | undefined> => {
       if (
         !workerRef.current ||
         messageIndex < 0 ||
@@ -461,8 +460,6 @@ MY QUESTION: ${question}`,
       }
 
       if (!userQuestion) return;
-
-      setPerformance({ tps: 0, numTokens: 0, totalTime: 0 });
       setStatus(AiStatus.LOADING);
 
       try {
@@ -533,11 +530,9 @@ MY QUESTION: ${question}`,
           return newHistory;
         });
 
-        // Start the generation process
-        workerRef.current.postMessage({
-          type: 'GENERATE_ANSWER',
-          payload: { messages: chatMessages },
-        });
+        return sendToWorker('GENERATE_ANSWER', {
+          messages: chatMessages,
+        }) as Promise<Generation>;
       } catch (error) {
         console.error('Error during model execution:', error);
         setStatus(AiStatus.ERROR);
@@ -575,8 +570,8 @@ MY QUESTION: ${question}`,
       getEmbeddings,
       fetchEmbeddings,
       saveEmbeddings,
+      clearConversation,
       generationModel,
-      // Expose the ref values as normal properties
       generationProgress: generationProgressRef.current,
       setGenerationModel,
       generateAnswer,
@@ -586,7 +581,6 @@ MY QUESTION: ${question}`,
       status,
       stopGeneration,
       progress,
-      performance,
       regeneratingIndex: regeneratingIndex.current,
     }),
     [
@@ -595,7 +589,7 @@ MY QUESTION: ${question}`,
       conversation,
       status,
       progress,
-      performance,
+      clearConversation,
       generateAnswer,
       regenerateAnswer,
       getNotes,

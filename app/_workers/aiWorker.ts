@@ -41,6 +41,9 @@ let stopping_criteria = new InterruptableStoppingCriteria();
 // Status tracking
 let embeddingProgress: number = 0;
 let generationProgress: number = 0;
+
+// Performance tracking
+let ttf: number = 0;
 let tps: number = 0;
 let numTokens: number = 0;
 let startTime: number | null = null;
@@ -98,15 +101,14 @@ async function initGenerator(generationModel: string): Promise<{success: boolean
     // Create streamer with callbacks that post messages back to the main thread
     streamer = new TextStreamer(tokenizer, {
       skip_prompt: true,
-      callback_function: (text: string) => {        
-        self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.GENERATING });
+      callback_function: (text: string) => {
         self.postMessage({ type: 'STREAM_RESPONSE', text });
       },
       token_callback_function: () => {
         startTime = startTime ?? performance.now();
         numTokens += 1;
+        ttf = ttf === 0 ? performance.now() - startTime : ttf;
         tps = (numTokens / (performance.now() - startTime)) * 1000;        
-        self.postMessage({ type: 'PERFORMANCE_UPDATE', tps, numTokens, totalTime: performance.now() - startTime });
       },
     });
     
@@ -136,54 +138,48 @@ async function getEmbeddings(input: string): Promise<{success: boolean, embeddin
 }
 
 // Generate answer with the model
-async function generateAnswer(messages: any[]): Promise<{success: boolean, error?: string}> {
+async function generateAnswer(messages: any[]): Promise<{success: boolean, response?: string, performance?: any, error?: string}> {
   if (!generator || !streamer || !tokenizer) {
-    return { success: false, error: 'Generator not initialized' };
+    throw new Error('Generator not initialized');
   }
-
+  
   const inputs = tokenizer.apply_chat_template(messages, {
     add_generation_prompt: true,
     return_dict: true,
   });
 
-  try {
-    tps = 0;
-    numTokens = 0;
-    startTime = null;
-    
-    const outputs = await generator.generate({
-       ...(inputs as any),
-        max_new_tokens: 512,
-        temperature: 0.1,
-        top_p: 0.9,
-        repetition_penalty: 1.2,
-        do_sample: false,
-        stop_sequences: ["I don't have enough", "I don't know", "MY QUESTION:", "MY NOTES:"],
-        streamer,
-        stopping_criteria,
-    });
+  ttf = 0;
+  tps = 0;
+  numTokens = 0;
+  startTime = performance.now();
+  
+  const outputs = await generator.generate({
+      ...(inputs as any),
+      max_new_tokens: 512,
+      temperature: 0.1,
+      top_p: 0.9,
+      repetition_penalty: 1.2,
+      do_sample: false,
+      stop_sequences: ["I don't have enough", "I don't know", "MY QUESTION:", "MY NOTES:"],
+      streamer,
+      stopping_criteria,
+  });
 
-    const response = tokenizer.batch_decode(outputs as any, { skip_special_tokens: true });
+  const response = tokenizer.batch_decode(outputs as any, { skip_special_tokens: true });
 
-    if (!response) {
-      throw new Error('No generation output received');
+  if (!response) {
+    throw new Error('No generation output received');
+  }
+
+  return  {
+    response: response[0] || '',
+    success: true,
+    performance: {
+      ttf,
+      tps,
+      numTokens,
+      totalTime: performance.now() - startTime,
     }
-
-    // Send completion message
-    self.postMessage({
-      type: 'GENERATION_COMPLETE',
-      content: response[0] || ''
-    });
-
-    self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.IDLE });
-    return { success: true };
-  } catch (error: any) {
-    self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.ERROR });
-    self.postMessage({
-      type: 'ERROR',
-      error: error.message,
-    });
-    return { success: false, error: error.message };
   }
 }
 
@@ -223,15 +219,33 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       break;
       
     case 'GENERATE_ANSWER':
-      stopping_criteria.reset();
-      await generateAnswer(payload.messages);
+      stopping_criteria.reset();      
+          
+      self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.GENERATING });
+
+      try{        
+        const generationResult = await generateAnswer(payload.messages);
+        
+        self.postMessage({
+          type: 'GENERATION_COMPLETE',
+          ...generationResult,
+          id,
+        });
+
+        self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.IDLE });
+      }catch(error){        
+        self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.ERROR });
+        self.postMessage({
+          type: 'ERROR',
+          error: (error as Error).message,
+        });
+      }     
+
       break;
       
     case 'STOP_GENERATION':
-      if (stopping_criteria) {
-        stopping_criteria.interrupt();
-        self.postMessage({ type: 'GENERATION_STOPPED', id });
-      }
+      stopping_criteria.interrupt();
+      self.postMessage({ type: 'GENERATION_STOPPED', success: true, id });
       break;
       
     default:

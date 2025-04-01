@@ -1,7 +1,7 @@
 'use client';
 
-import { BsChatDots, BsSearch } from 'react-icons/bs';
-import { chatTab, graphTab } from '@/app/_utils/tabs';
+import { BsChatDots, BsSearch, BsSpeedometer2 } from 'react-icons/bs';
+import { chatTab, evaluationTab, graphTab } from '@/app/_utils/tabs';
 import { useEffect, useState } from 'react';
 
 import ButtonSquare from '@/app/_components/ButtonSquare';
@@ -53,12 +53,24 @@ const Sidebar = () => {
         >
           <PiGraphLight className='mx-auto h-6 w-6' />
         </ButtonSquare>
+        <ButtonSquare
+          className='tooltip tooltip-right'
+          size='sm'
+          tip='Evaluation'
+          onClick={() => addTab(evaluationTab)}
+        >
+          <BsSpeedometer2 className='mx-auto h-4 w-4' />
+        </ButtonSquare>
       </SidebarShortcuts>
       <SidebarDrawer isOpen={isOpen}>
         {isLoading ? (
           <SidebarSkeleton />
         ) : (
-          <SidebarFileTree files={files} onMoveFile={moveFile} onRenameFile={renameFile} />
+          <SidebarFileTree
+            files={files}
+            onMoveFile={moveFile}
+            onRenameFile={renameFile}
+          />
         )}
       </SidebarDrawer>
     </nav>

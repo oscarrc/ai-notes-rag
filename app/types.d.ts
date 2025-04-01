@@ -23,6 +23,12 @@ interface WorkerState {
 
 type Embedding = Float32Array | number[];
 
+type Generation = {
+  type: string;
+  response: string;
+  performance: AiPerformance;
+}
+
 interface EmbeddingRecord {
   name: string;
   path: string;
@@ -47,6 +53,7 @@ interface Toast {
 }
 
 interface AiPerformance {
+  ttf: number;
   tps: number;
   numTokens: number;
   totalTime: number;
