@@ -38,10 +38,6 @@ let tokenizer: PreTrainedTokenizer | null = null;
 let streamer: TextStreamer | null = null;
 let stopping_criteria = new InterruptableStoppingCriteria();
 
-// Status tracking
-let embeddingProgress: number = 0;
-let generationProgress: number = 0;
-
 // Performance tracking
 let ttf: number = 0;
 let tps: number = 0;
@@ -51,15 +47,16 @@ let startTime: number | null = null;
 // Initialize embedding model
 async function initEmbedder(embeddingModel: string): Promise<{success: boolean, error?: string}> {
   try {
+    // @ts-ignore
     embedder = await pipeline(
       'feature-extraction',
       `embedding/${embeddingModel}`,
       {
+        dtype: 'fp16',
         // @ts-ignore
         device: !!navigator.gpu ? 'webgpu' : 'wasm',
         progress_callback: (p: any) => {
           if (!isNaN(p.progress)) {
-            embeddingProgress = p.progress;
             self.postMessage({ type: 'EMBEDDING_PROGRESS', progress: p.progress });
           }
         },
@@ -78,10 +75,10 @@ async function initGenerator(generationModel: string): Promise<{success: boolean
 
     generator =  await AutoModelForCausalLM.from_pretrained(model, {
         dtype: 'q4f16',
-        device: 'webgpu',
+        // @ts-ignore
+        device: !!navigator.gpu ? 'webgpu' : 'wasm',
         progress_callback: (p: any) => {
           if (!isNaN(p.progress)) {
-            generationProgress = p.progress;
             self.postMessage({ type: 'GENERATION_PROGRESS', progress: p.progress });
           }
         },
@@ -91,7 +88,6 @@ async function initGenerator(generationModel: string): Promise<{success: boolean
       legacy: true,
       progress_callback: (p: any) => {
         if (!isNaN(p.progress)) {
-          generationProgress = p.progress;
           self.postMessage({ type: 'GENERATION_PROGRESS', progress: p.progress });
         }
       },
@@ -102,7 +98,8 @@ async function initGenerator(generationModel: string): Promise<{success: boolean
     streamer = new TextStreamer(tokenizer, {
       skip_prompt: true,
       callback_function: (text: string) => {
-        self.postMessage({ type: 'STREAM_RESPONSE', text });
+        self.postMessage({ type: 'STREAM_RESPONSE', text });        
+        self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.GENERATING });
       },
       token_callback_function: () => {
         startTime = startTime ?? performance.now();
@@ -147,7 +144,7 @@ async function generateAnswer(messages: any[]): Promise<{success: boolean, respo
     add_generation_prompt: true,
     return_dict: true,
   });
-
+    
   ttf = 0;
   tps = 0;
   numTokens = 0;
@@ -219,11 +216,9 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
       break;
       
     case 'GENERATE_ANSWER':
-      stopping_criteria.reset();      
-          
-      self.postMessage({ type: 'STATUS_UPDATE', status: AiStatus.GENERATING });
-
-      try{        
+      stopping_criteria.reset();
+      
+      try{
         const generationResult = await generateAnswer(payload.messages);
         
         self.postMessage({
@@ -239,8 +234,8 @@ self.addEventListener('message', async (event: MessageEvent<WorkerMessage>) => {
           type: 'ERROR',
           error: (error as Error).message,
         });
-      }     
-
+        console.log(error)
+      }
       break;
       
     case 'STOP_GENERATION':
