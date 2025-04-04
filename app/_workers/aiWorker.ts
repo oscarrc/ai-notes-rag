@@ -47,6 +47,7 @@ let startTime: number | null = null;
 // Initialize embedding model
 async function initEmbedder(embeddingModel: string): Promise<{success: boolean, error?: string}> {
   try {
+    // @ts-ignore
     embedder = await pipeline(
       'feature-extraction',
       `embedding/${embeddingModel}`,
@@ -143,7 +144,7 @@ async function generateAnswer(messages: any[]): Promise<{success: boolean, respo
     add_generation_prompt: true,
     return_dict: true,
   });
-
+    
   ttf = 0;
   tps = 0;
   numTokens = 0;
