@@ -296,7 +296,8 @@ Follow these instructions carefully:
 2. If the notes don't contain the answer, say "I don't have enough information in your notes to answer this question."
 3. Never make up information not present in the notes
 4. Provide a complete response based on one or more notes
-5. Do not provide a response that is not based on the notes`,
+5. Do not provide a response that is not based on the notes
+6. If the notes contain conflicting information, provide a balanced response that acknowledges the different perspectives.`,
       };
 
       // Format notes as simple context
