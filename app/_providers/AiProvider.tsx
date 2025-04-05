@@ -35,14 +35,14 @@ You are an AI assistant that helps answer questions based on the user's personal
 Follow these instructions carefully:
 1. Only use information found in the user's notes
 2. If the notes don't contain the answer, say "I don't have enough information in your notes to answer this question."
-3. Never make up information not present in the notes
+3. Never make up, expand or infer information not present in the notes
 4. Provide a complete response based on one or more notes
 5. Do not provide a response that is not based on the notes
 6. If the notes contain conflicting information, provide a balanced response that acknowledges the different perspectives.
-7. Do not include meta-commentary about the conversation or your process of answering 
-8. Never refer to "previous conversation context" or similar phrases in your response 
-9. Do not explain that you're answering "directly from notes" or make statements about sticking to available data 
-10. Keep your tone helpful and direct without unnecessary phrases like "I'm telling you now" or "Based on your notes" 
+7. Maintain conversational continuity by referring to previous exchanges when relevant
+8. Do not include meta-commentary about the conversation or your process of answering 
+9. Never refer to "previous conversation context" or similar phrases in your response 
+10. Do not explain that you're answering "directly from notes" or make statements about sticking to available data or context.  
 `;
 
 export const AiProvider = ({ children }: { children: React.ReactNode }) => {
@@ -276,20 +276,22 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     question: string,
     history: HistoryMessage[]
   ) => {
-    const relevantHistory = history.slice(-4);
+    const relevantHistory = history.slice(-6);
 
     if (relevantHistory.length === 0) {
       return question;
     }
 
     const contextString = relevantHistory
-      .map((msg) => {
-        if (msg.role === 'system') return;
-        return `${msg.role === 'user' ? 'Question' : 'Answer'}: ${Array.isArray(msg.content) ? msg.content.join('\n') : msg.content}`;
+      .map((msg, index) => {
+        if (msg.role === 'system') return null;
+        // Add turn numbers to help model understand conversation flow
+        return `Turn ${index + 1} - ${msg.role === 'user' ? 'Human' : 'Assistant'}: ${Array.isArray(msg.content) ? msg.content.join('\n') : msg.content}`;
       })
-      .join('\n');
+      .filter(Boolean)
+      .join('\n\n');
 
-    return `${contextString}\n Question: ${question}`;
+    return `Previous conversation:\n${contextString}\n\nCurrent question: ${question}`;
   };
 
   const getNotes = useCallback(
@@ -431,9 +433,14 @@ MY QUESTION: ${question}`,
       setConversation((c) => [...c, { role: 'user', content: question }]);
 
       try {
+        let query = question;
         setStatus(AiStatus.LOADING);
 
-        const notes = await getNotes(question);
+        if (conversation.length > 0) {
+          query = createContextualQuery(question, conversation);
+        }
+
+        const notes = await getNotes(query);
 
         if (notes.length === 0 && conversation.length === 0) {
           setStatus(AiStatus.GENERATING);
@@ -491,32 +498,31 @@ MY QUESTION: ${question}`,
       )
         return;
 
-      // Find the corresponding user question before this answer
-      let question = '';
+      let question = conversation[messageIndex - 1].content as string;
+      let query = question;
 
       regeneratingIndex.current = messageIndex;
 
-      for (let i = messageIndex - 1; i >= 0; i--) {
-        if (conversation[i].role === 'user') {
-          question = conversation[i].content as string;
-          break;
-        }
+      if (conversation.length > 0) {
+        query = createContextualQuery(
+          query,
+          conversation.slice(0, messageIndex - 2)
+        );
       }
 
-      if (!question) return;
+      if (!query) return;
+
       setStatus(AiStatus.LOADING);
 
       try {
-        const notes = await getNotes(question);
+        const notes = await getNotes(query);
 
-        // Store current message info for regeneration before modifying
         const currentAssistantMessage = conversation[messageIndex];
         const currentContent = currentAssistantMessage.content;
 
         if (notes.length === 0 && conversation.length === 0) {
           setStatus(AiStatus.GENERATING);
 
-          // Prepare a new answer array without empty strings
           const newContent =
             typeof currentContent === 'string'
               ? [
@@ -528,7 +534,6 @@ MY QUESTION: ${question}`,
                   "I don't have enough information in my sources to answer this question.",
                 ];
 
-          // Update conversation with the complete answer
           setConversation((c) => {
             const newHistory = [...c];
             newHistory[messageIndex] = {
@@ -543,25 +548,20 @@ MY QUESTION: ${question}`,
           return;
         }
 
-        // Create the chat messages array using the helper function
         const chatMessages = createChatMessages(
           notes,
           question,
           regeneratingIndex.current
         );
 
-        // Prepare the conversation for receiving a new answer
         setConversation((c) => {
           const newHistory = [...c];
           const assistantMessage = newHistory[messageIndex];
 
-          // Prepare for streaming - convert to array if needed and add empty string placeholder
           let newContent;
           if (typeof assistantMessage.content === 'string') {
-            // First regeneration: convert string to array with original content and add placeholder
             newContent = [assistantMessage.content, ''];
           } else if (Array.isArray(assistantMessage.content)) {
-            // Already an array, just add a placeholder
             newContent = [...assistantMessage.content, ''];
           }
 
