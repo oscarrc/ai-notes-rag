@@ -28,6 +28,30 @@ const embeddingsSchema = new Schema([
   ),
 ]);
 
+export const createIndex = async (table: lancedb.Table, fieldName: string, config: any) => {
+  const POLL_INTERVAL = 10000;
+  const indexes = await table.listIndices();
+  const indexName = `${fieldName}_idx`;
+  const indexExists = indexes.some((index) => index.name === indexName);
+
+  if(indexExists) return;
+
+  await table.createIndex(fieldName, {
+    config,
+  });
+
+  while (true) {
+    const indices = await table.listIndices();
+    if (indices.some((index) => index.name === indexName)) break;
+    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL));
+  }
+}
+
+export const hasTextIndex = async (table: any) => {
+  const indexes = await table.listIndices();
+  return indexes.some((index: any) => ['content_idx', 'name_idx'].includes(index.name));
+}
+
 export const connectDB = async () => {
   const dbDir = path.join(process.cwd(), DATA_PATH, DB);
   const db = await lancedb.connect(dbDir);
@@ -42,9 +66,23 @@ export const getTable = async (db: any, tableName: string) => {
       return await db.openTable(tableName);
     }
 
-    return await db.createEmptyTable(tableName, embeddingsSchema, {
+    const table = await db.createEmptyTable(tableName, embeddingsSchema, {
       existOk: true,
     });
+
+    await createIndex(
+      table,
+      'vector',
+      lancedb.Index.hnswSq({
+        numPartitions: 1,
+        distanceType: 'cosine',
+      })
+    );
+
+    await createIndex(table, 'content', lancedb.Index.fts());
+    await createIndex(table, 'name', lancedb.Index.fts());
+
+    return table;
   } catch (error) {
     console.error('Error creating table:', error);
     throw error;
@@ -173,3 +211,5 @@ export const deleteEmbeddings = async (path: string) => {
     };
   }
 }
+
+export const getReranker = async () => await lancedb.rerankers.RRFReranker.create();

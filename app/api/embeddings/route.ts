@@ -1,5 +1,5 @@
-import { connectDB, getTable } from './helper';
-import { extractFilePaths, fetchFiles, getFile } from '../files/helper';
+import { connectDB, getReranker, getTable, hasTextIndex } from './helper';
+import { extractFilePaths, fetchFiles } from '../files/helper';
 
 import { NextResponse } from 'next/server';
 
@@ -10,7 +10,7 @@ const BASE_PATH = `/${DATA_PATH}/${VAULT_PATH}/`.replace('//', '');
 export async function GET() {
   try {
     const db = await connectDB();
-    const table = await getTable(db, 'embeddings');
+    await getTable(db, 'embeddings');    
     return NextResponse.json({});
   } catch (error) {
     console.log(error);
@@ -25,7 +25,6 @@ export async function POST(req: Request) {
     const db = await connectDB();
     const table = await getTable(db, 'embeddings');
     const embeddings = Array.isArray(data) ? data : [data];
-
     await table
       .mergeInsert("path")
       .whenMatchedUpdateAll()
@@ -45,13 +44,27 @@ export async function PUT(req: Request) {
   try {
     const db = await connectDB();
     const table = await getTable(db, 'embeddings');
-    
-    const results = await table
-      .search(data)
-      .distanceType("cosine")
-      .distanceRange(0, 0.65)
-      .limit(5)
-      .toArray();
+    const reranker = await getReranker();
+    const hasIndex = await hasTextIndex(table);
+        
+    let results;
+
+    if(data.text && hasIndex){
+      results = await table
+        .query()
+        .fullTextSearch(data.text)
+        .nearestTo(data.vector)
+        .rerank(reranker)
+        .limit(10)
+        .toArray();
+    }else{    
+      results = await table
+        .search(data.vector)
+        .distanceType("cosine")
+        .distanceRange(0, 0.65)
+        .limit(5)
+        .toArray();
+    }
 
     return NextResponse.json(results);
   } catch (error) {
