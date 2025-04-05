@@ -30,6 +30,25 @@ type PendingRequest = {
   reject: (reason?: any) => void;
 };
 
+const SYSTEM_PROMPT = `
+You are an AI assistant that helps answer questions based on the user's personal notes. 
+Follow these instructions carefully:
+1. Only use information found in the user's notes
+2. If the notes don't contain the answer, say "I don't have enough information in your notes to answer this question." and stop answering.
+3. Never make up information not present in the notes. Do not add information that is not on the notes.
+4. Provide a complete response based on one or more notes
+5. Do not provide a response that is not based on the notes
+6. If the notes contain conflicting information, provide a balanced response that acknowledges the different perspectives.
+7. When responding to follow-up questions, consider the previous conversation context.
+8. Always indicate which note(s) you are drawing information from in your response
+9. For complex answers spanning multiple notes, organize your response with clear headings or sections
+10. When information is ambiguous, indicate your level of confidence in the answer
+11. If notes contain partial information on the topic, acknowledge the limitations while providing what is available
+12. If you notice date information in notes that suggests content might be outdated, mention this to the user
+13. Provide concise but comprehensive answers appropriate to the complexity of the question
+14. For technical content like code or formulas, maintain proper formatting in your response
+`;
+
 export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   const workerRef = useRef<Worker | null>(null);
   const pendingRequests = useRef<Map<string, PendingRequest>>(new Map());
@@ -225,13 +244,19 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   );
 
   const fetchEmbeddings = useCallback(
-    async (embeddings: Embedding): Promise<EmbeddingRecord[]> => {
+    async (
+      embeddings: Embedding,
+      query?: string | null
+    ): Promise<EmbeddingRecord[]> => {
       try {
         const result = await fetch(
           `${process.env.NEXT_PUBLIC_BASE_URL}/api/embeddings`,
           {
             method: 'PUT',
-            body: JSON.stringify(embeddings),
+            body: JSON.stringify({
+              vector: embeddings,
+              text: query,
+            }),
             headers: {
               'Content-Type': 'application/json',
             },
@@ -306,19 +331,15 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Create chat messages array for the model
   const createChatMessages = useCallback(
-    (notes: EmbeddingRecord[], question: string): HistoryMessage[] => {
+    (
+      notes: EmbeddingRecord[],
+      question: string,
+      index?: number
+    ): HistoryMessage[] => {
       // Instruction-based system message
       const systemMessage: HistoryMessage = {
         role: 'system',
-        content: `You are an AI assistant that helps answer questions based on the user's personal notes. 
-Follow these instructions carefully:
-1. Only use information found in the user's notes
-2. If the notes don't contain the answer, say "I don't have enough information in your notes to answer this question."
-3. Never make up information not present in the notes
-4. Provide a complete response based on one or more notes
-5. Do not provide a response that is not based on the notes
-6. If the notes contain conflicting information, provide a balanced response that acknowledges the different perspectives.
-7. When responding to follow-up questions, consider the previous conversation context.`,
+        content: SYSTEM_PROMPT,
       };
 
       // Format notes as simple context
@@ -327,12 +348,14 @@ Follow these instructions carefully:
         .join('\n\n');
 
       // Fetch relevant history
-      const relevantHistory = conversation.slice(-5);
+      const relevantHistory = index
+        ? conversation.slice(index, -5)
+        : conversation.slice(-5);
 
       // Structure as instruction + context + question
       const userMessage: HistoryMessage = {
         role: 'user',
-        content: `INSTRUCTION: Answer my question using only information from my notes. If my notes don't contain the answer, tell me you don't have enough information.
+        content: `INSTRUCTION: Answer my question using only information from my notes and previous conversation context. If my notes don't contain the answer, tell me you don't have enough information.
 
 MY NOTES:
 ${formattedNotes}
@@ -342,7 +365,7 @@ MY QUESTION: ${question}`,
 
       return [systemMessage, ...relevantHistory, userMessage];
     },
-    []
+    [conversation]
   );
 
   const streamResponse = useCallback((text: string) => {
@@ -414,8 +437,7 @@ MY QUESTION: ${question}`,
       try {
         setStatus(AiStatus.LOADING);
 
-        const contextQuery = createContextualQuery(question, conversation);
-        const notes = await getNotes(contextQuery);
+        const notes = await getNotes(question);
 
         if (notes.length === 0 && conversation.length === 0) {
           setStatus(AiStatus.GENERATING);
@@ -460,7 +482,7 @@ MY QUESTION: ${question}`,
         ]);
       }
     },
-    [conversation, getNotes, createChatMessages, streamResponse]
+    [getNotes, createChatMessages, streamResponse]
   );
 
   // Modified regenerateAnswer function
@@ -474,26 +496,22 @@ MY QUESTION: ${question}`,
         return;
 
       // Find the corresponding user question before this answer
-      let userQuestion = '';
+      let question = '';
 
       regeneratingIndex.current = messageIndex;
 
       for (let i = messageIndex - 1; i >= 0; i--) {
         if (conversation[i].role === 'user') {
-          userQuestion = conversation[i].content as string;
+          question = conversation[i].content as string;
           break;
         }
       }
 
-      if (!userQuestion) return;
+      if (!question) return;
       setStatus(AiStatus.LOADING);
 
       try {
-        const contextQuery = createContextualQuery(
-          userQuestion,
-          conversation.slice(0, messageIndex)
-        );
-        const notes = await getNotes(contextQuery);
+        const notes = await getNotes(question);
 
         // Store current message info for regeneration before modifying
         const currentAssistantMessage = conversation[messageIndex];
@@ -530,7 +548,11 @@ MY QUESTION: ${question}`,
         }
 
         // Create the chat messages array using the helper function
-        const chatMessages = createChatMessages(notes, userQuestion);
+        const chatMessages = createChatMessages(
+          notes,
+          question,
+          regeneratingIndex.current
+        );
 
         // Prepare the conversation for receiving a new answer
         setConversation((c) => {
@@ -587,7 +609,7 @@ MY QUESTION: ${question}`,
         regeneratingIndex.current = null;
       }
     },
-    [conversation, getNotes, createChatMessages]
+    [getNotes, createChatMessages]
   );
 
   const resetChat = () => {
