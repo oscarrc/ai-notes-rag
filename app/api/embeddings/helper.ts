@@ -94,9 +94,7 @@ export const updateEmbeddingsFilename = async (oldPath: string, newPath: string)
   try {
     const db = await connectDB();
     const table = await getTable(db, 'embeddings');
-    
-    console.log(`Updating embeddings filename from ${oldPath} to ${newPath}`);
-    
+        
     const exactRecords = await table.query(`path = "${oldPath}"`).toArray();  
     const childRecords = await table.query(`path LIKE "%${oldPath}/%"`).toArray();
     
@@ -113,7 +111,6 @@ export const updateEmbeddingsFilename = async (oldPath: string, newPath: string)
       
       const oldName = path.basename(oldPath, path.extname(oldPath));
       const newName = path.basename(newPath, path.extname(newPath));
-      console.log(`Renaming from "${oldName}" to "${newName}"`);
       
       const updatedRecords = records.map((record: any) => {
         let updatedPath = record.path;
@@ -150,3 +147,29 @@ export const updateEmbeddingsFilename = async (oldPath: string, newPath: string)
     };
   }
 };
+
+export const deleteEmbeddings = async (path: string) => {
+  try {
+    const db = await connectDB();
+    const table = await getTable(db, 'embeddings');
+    
+    const records = await table.query(`path LIKE "%${path}%"`).toArray();
+    
+    if (records && records.length > 0) {
+      await table.delete(`path LIKE "${path}"`);
+      
+      return {
+        success: true, 
+        count: records.length
+      };
+    }
+    
+    return { success: true, count: 0 };
+  } catch (error) {
+    console.error("Failed to delete embeddings:", error);
+    return { 
+      success: false, 
+      error: (error as Error)?.message || "Unknown error deleting embeddings"
+    };
+  }
+}

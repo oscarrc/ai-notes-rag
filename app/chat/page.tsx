@@ -46,7 +46,6 @@ const ChatTab = () => {
 
       try {
         const result = await generateAnswer(text);
-        console.log(result);
         showPerformance(result?.performance);
       } catch (error) {
         console.error('Error in chat submission:', error);
@@ -75,7 +74,7 @@ const ChatTab = () => {
         isGenerating={
           status === AiStatus.GENERATING || status === AiStatus.LOADING
         }
-        className='sticky bottom-0 z-50 min-h-32 self-center'
+        className='sticky bottom-0 z-50 min-h-40 self-center'
       />
 
       <div className='z-0 mb-8 flex flex-col items-center gap-8'>
