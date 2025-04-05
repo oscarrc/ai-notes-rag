@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@huggingface/transformers": "^3.4.2",
-    "@lancedb/lancedb": "^0.16.0",
+    "@lancedb/lancedb": "^0.18.2",
     "@lexical/markdown": "^0.24.0",
     "@lexical/react": "^0.24.0",
     "@tanstack/react-query": "^5.66.0",
