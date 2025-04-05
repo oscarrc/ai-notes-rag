@@ -251,6 +251,26 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
+  const createContextualQuery = (
+    question: string,
+    history: HistoryMessage[]
+  ) => {
+    const relevantHistory = history.slice(-4);
+
+    if (relevantHistory.length === 0) {
+      return question;
+    }
+
+    const contextString = relevantHistory
+      .map((msg) => {
+        if (msg.role === 'system') return;
+        return `${msg.role === 'user' ? 'Question' : 'Answer'}: ${Array.isArray(msg.content) ? msg.content.join('\n') : msg.content}`;
+      })
+      .join('\n');
+
+    return `${contextString}\n Question: ${question}`;
+  };
+
   const getNotes = useCallback(
     async (query: string): Promise<EmbeddingRecord[]> => {
       const embeddings = await getEmbeddings(query);
@@ -297,13 +317,17 @@ Follow these instructions carefully:
 3. Never make up information not present in the notes
 4. Provide a complete response based on one or more notes
 5. Do not provide a response that is not based on the notes
-6. If the notes contain conflicting information, provide a balanced response that acknowledges the different perspectives.`,
+6. If the notes contain conflicting information, provide a balanced response that acknowledges the different perspectives.
+7. When responding to follow-up questions, consider the previous conversation context.`,
       };
 
       // Format notes as simple context
       const formattedNotes = notes
         .map((note) => `NOTE - ${note.name}:\n${note.content.trim()}`)
         .join('\n\n');
+
+      // Fetch relevant history
+      const relevantHistory = conversation.slice(-5);
 
       // Structure as instruction + context + question
       const userMessage: HistoryMessage = {
@@ -316,7 +340,7 @@ ${formattedNotes}
 MY QUESTION: ${question}`,
       };
 
-      return [systemMessage, userMessage];
+      return [systemMessage, ...relevantHistory, userMessage];
     },
     []
   );
@@ -390,9 +414,10 @@ MY QUESTION: ${question}`,
       try {
         setStatus(AiStatus.LOADING);
 
-        const notes = await getNotes(question);
+        const contextQuery = createContextualQuery(question, conversation);
+        const notes = await getNotes(contextQuery);
 
-        if (notes.length === 0) {
+        if (notes.length === 0 && conversation.length === 0) {
           setStatus(AiStatus.GENERATING);
           streamResponse(
             "I don't have enough information in my sources to answer this question."
@@ -435,7 +460,7 @@ MY QUESTION: ${question}`,
         ]);
       }
     },
-    [getNotes, createChatMessages, streamResponse]
+    [conversation, getNotes, createChatMessages, streamResponse]
   );
 
   // Modified regenerateAnswer function
@@ -464,13 +489,17 @@ MY QUESTION: ${question}`,
       setStatus(AiStatus.LOADING);
 
       try {
-        const notes = await getNotes(userQuestion);
+        const contextQuery = createContextualQuery(
+          userQuestion,
+          conversation.slice(0, messageIndex)
+        );
+        const notes = await getNotes(contextQuery);
 
         // Store current message info for regeneration before modifying
         const currentAssistantMessage = conversation[messageIndex];
         const currentContent = currentAssistantMessage.content;
 
-        if (notes.length === 0) {
+        if (notes.length === 0 && conversation.length === 0) {
           setStatus(AiStatus.GENERATING);
 
           // Prepare a new answer array without empty strings
