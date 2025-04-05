@@ -1,9 +1,11 @@
 'use client';
 
 import { AiStatus } from '@/app/_providers/AiProvider';
+import ButtonSquare from '../_components/ButtonSquare';
 import ChatAnswer from './_components/ChatAnswer';
 import ChatInput from './_components/ChatInput';
 import ChatQuestion from './_components/ChatQuestion';
+import { VscDebugRestart } from 'react-icons/vsc';
 import { useAi } from '@/app/_hooks/useAi';
 import { useCallback } from 'react';
 import { useToast } from '../_hooks/useToast';
@@ -16,6 +18,7 @@ const ChatTab = () => {
     stopGeneration,
     regenerateAnswer,
     regeneratingIndex,
+    resetChat,
   } = useAi();
 
   const { showToast } = useToast();
@@ -117,6 +120,16 @@ const ChatTab = () => {
           </div>
         )}
       </div>
+      {hasConversation ? (
+        <ButtonSquare
+          className='tooltip tooltip-left fixed bottom-4 right-4 z-50'
+          tip='New chat'
+          size='sm'
+          onClick={resetChat}
+        >
+          <VscDebugRestart className='mx-auto h-4 w-4' />
+        </ButtonSquare>
+      ) : null}
     </section>
   );
 };
