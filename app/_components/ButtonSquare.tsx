@@ -22,9 +22,13 @@ const ButtonSquare = ({
     xs: 'btn-xs',
   };
 
+  const classes = className?.includes('btn-')
+    ? className
+    : `btn-ghost ${className}`;
+
   return (
     <button
-      className={`btn btn-square btn-ghost ${sizes[size]} ${className}`}
+      className={`btn btn-square ${sizes[size]} ${classes}`}
       onClick={onClick}
       disabled={disabled}
       {...(className?.includes('tooltip') && tip ? { 'data-tip': tip } : '')}

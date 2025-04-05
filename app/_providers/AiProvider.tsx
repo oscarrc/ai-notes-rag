@@ -590,6 +590,12 @@ MY QUESTION: ${question}`,
     [conversation, getNotes, createChatMessages]
   );
 
+  const resetChat = () => {
+    stopGeneration();
+    setConversation([]);
+    setStatus(AiStatus.IDLE);
+  };
+
   // Create a memoized context value to avoid unnecessary re-renders
   const contextValue = useMemo(
     () => ({
@@ -606,6 +612,7 @@ MY QUESTION: ${question}`,
       setGenerationModel,
       generateAnswer,
       regenerateAnswer,
+      resetChat,
       getNotes,
       conversation,
       status,
@@ -622,6 +629,7 @@ MY QUESTION: ${question}`,
       clearConversation,
       generateAnswer,
       regenerateAnswer,
+      resetChat,
       getNotes,
       stopGeneration,
       getEmbeddings,

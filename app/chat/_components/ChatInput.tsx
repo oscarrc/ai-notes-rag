@@ -40,7 +40,7 @@ const ChatInput = ({
       className={`flex w-full max-w-2xl flex-col gap-2 bg-base-100 p-2 ${className}`}
     >
       <form
-        className='textarea flex w-full items-center gap-4 rounded-box bg-base-200 p-2'
+        className='textarea flex w-full items-center gap-4 rounded-box bg-base-200 px-4 py-2'
         onSubmit={handleSubmit}
       >
         <textarea
@@ -52,11 +52,11 @@ const ChatInput = ({
           className='h-24 flex-1 resize-none bg-transparent focus-visible:outline-none'
         />
         {isGenerating ? (
-          <ButtonSquare size='md' className='btn-neutral self-end'>
+          <ButtonSquare size='md' className='self-end'>
             <VscDebugStop className='h-6 w-6' />
           </ButtonSquare>
         ) : (
-          <ButtonSquare size='md' className='btn-neutral self-end'>
+          <ButtonSquare size='md' className='self-end'>
             <VscSend className='h-6 w-6' />
           </ButtonSquare>
         )}
