@@ -39,7 +39,6 @@ interface EmbeddingRecord {
 interface HistoryMessage {
   role: 'user' | 'assistant' | 'system' | 'context';
   content: string | string[];
-  context?: EmbeddingRecord[];
   sources?: FileNode[];
 }
 

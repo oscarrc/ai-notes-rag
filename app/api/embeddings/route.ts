@@ -61,7 +61,8 @@ export async function PUT(req: Request) {
       results = await table
         .search(data.vector)
         .distanceType("cosine")
-        .distanceRange(0, 0.65)
+        .distanceRange(0, 0.7)
+        .rerank(reranker)
         .limit(5)
         .toArray();
     }

@@ -33,16 +33,12 @@ type PendingRequest = {
 const SYSTEM_PROMPT = `
 You are an AI assistant that helps answer questions based on the user's personal notes. 
 Follow these instructions carefully:
-1. Only use information found in the user's notes
+1. Only use information found in the user's notes. Do not infer or add extra information.
 2. If the notes don't contain the answer, say "I don't have enough information in your notes to answer this question."
-3. Never make up, expand or infer information not present in the notes
+3. Never make up information not present in the notes
 4. Provide a complete response based on one or more notes
 5. Do not provide a response that is not based on the notes
 6. If the notes contain conflicting information, provide a balanced response that acknowledges the different perspectives.
-7. Maintain conversational continuity by referring to previous exchanges when relevant
-8. Do not include meta-commentary about the conversation or your process of answering 
-9. Never refer to "previous conversation context" or similar phrases in your response 
-10. Do not explain that you're answering "directly from notes" or make statements about sticking to available data or context.  
 `;
 
 export const AiProvider = ({ children }: { children: React.ReactNode }) => {
@@ -59,10 +55,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   // Use refs for progress tracking to avoid dependency cycles
   const embeddingProgressRef = useRef(0);
   const generationProgressRef = useRef(0);
-
-  const clearConversation = () => {
-    setConversation([]);
-  };
 
   // Calculate the combined progress without dependencies
   const progress = useMemo((): number => {
@@ -272,25 +264,6 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     []
   );
 
-  const createContextualQuery = (
-    question: string,
-    history: HistoryMessage[]
-  ) => {
-    const contextWindow = history.slice(-6);
-
-    if (contextWindow.length === 0) {
-      return question;
-    }
-
-    return (
-      contextWindow
-        .filter((msg) => msg.role === 'user')
-        .map((msg) => msg.content)
-        .filter(Boolean)
-        .join('\n\n') + question
-    );
-  };
-
   const getNotes = useCallback(
     async (query: string): Promise<EmbeddingRecord[]> => {
       const embeddings = await getEmbeddings(query);
@@ -298,6 +271,12 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     },
     [getEmbeddings, fetchEmbeddings]
   );
+
+  const getFormattedContext = (notes: EmbeddingRecord[]) => {
+    return notes
+      .map((note) => `NOTE - ${note.name}:\n${note.content.trim()}`)
+      .join('\n\n');
+  };
 
   const saveEmbeddings = useCallback(
     async (data: EmbeddingRecord): Promise<void> => {
@@ -326,46 +305,36 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Create chat messages array for the model
   const createChatMessages = useCallback(
-    (message: HistoryMessage, index?: number): HistoryMessage[] => {
+    (
+      notes: EmbeddingRecord[],
+      question: string,
+      index?: number
+    ): HistoryMessage[] => {
       // Instruction-based system message
       const systemMessage: HistoryMessage = {
         role: 'system',
         content: SYSTEM_PROMPT,
       };
 
-      const relevantHistory = index
-        ? conversation.slice(index, -5)
-        : conversation.slice(-5);
-
-      relevantHistory.push(message);
-
       // Format notes as simple context
-      const formatContext = (ctx: EmbeddingRecord[]) => {
-        return ctx
-          .map((note) => `NOTE - ${note.name}:\n${note.content.trim()}`)
-          .join('\n\n');
+      const formattedNotes = getFormattedContext(notes);
+
+      // Structure as instruction + context + question
+      const userMessage: HistoryMessage = {
+        role: 'user',
+        content: `
+          INSTRUCTION: Answer my question using only information from my notes. If my notes don't contain the answer, tell me you don't have enough information.
+          MY NOTES:
+          ${formattedNotes}
+          MY QUESTION: ${question}
+        `,
       };
 
-      const formattedHistory = relevantHistory.map((msg) => {
-        if (msg.role === 'system') return;
-        if (msg.role === 'assistant')
-          return {
-            role: 'assistant',
-            content: Array.isArray(msg.content)
-              ? msg.content.join(' ')
-              : msg.content,
-          };
-        if (msg.role === 'user')
-          return {
-            role: 'user',
-            content: `INSTRUCTION: Answer my question using only information from my notes and previous conversation context. If my notes don't contain the answer, tell me you don't have enough information.
-                      MY NOTES:
-                      ${formatContext(msg.context || [])}
-                      MY QUESTION: ${msg.content}`,
-          };
-      }) as HistoryMessage[];
+      const previousConversation = index
+        ? conversation.slice(0, index)
+        : conversation;
 
-      return [systemMessage, ...formattedHistory];
+      return [systemMessage, ...previousConversation, userMessage];
     },
     [conversation]
   );
@@ -433,19 +402,13 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
       if (!workerRef.current) return;
 
       regeneratingIndex.current = null;
-      const userMessage: HistoryMessage = { role: 'user', content: question };
 
-      setConversation((c) => [...c, userMessage]);
+      setConversation((c) => [...c, { role: 'user', content: question }]);
 
       try {
-        let query = question;
         setStatus(AiStatus.LOADING);
 
-        if (conversation.length > 0) {
-          query = createContextualQuery(question, conversation);
-        }
-
-        const notes = await getNotes(query);
+        const notes = await getNotes(question);
 
         if (notes.length === 0 && conversation.length === 0) {
           setStatus(AiStatus.GENERATING);
@@ -456,17 +419,8 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
-        userMessage.context = notes;
-
-        setConversation((c) => {
-          const newHistory = [...c];
-          const lastUserMessageIndex = newHistory.length - 1;
-          newHistory[lastUserMessageIndex] = userMessage;
-          return newHistory;
-        });
-
         // Create the chat messages array using the helper function
-        const chatMessages = createChatMessages(userMessage);
+        const chatMessages = createChatMessages(notes, question);
 
         setConversation((c) => {
           const newHistory = [...c];
@@ -512,31 +466,32 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
       )
         return;
 
-      let question = conversation[messageIndex - 1];
-      let query = question.content as string;
+      // Find the corresponding user question before this answer
+      let userQuestion = '';
 
       regeneratingIndex.current = messageIndex;
 
-      if (conversation.length > 0) {
-        query = createContextualQuery(
-          query,
-          conversation.slice(0, messageIndex - 2)
-        );
+      for (let i = messageIndex - 1; i >= 0; i--) {
+        if (conversation[i].role === 'user') {
+          userQuestion = conversation[i].content as string;
+          break;
+        }
       }
 
-      if (!query) return;
-
+      if (!userQuestion) return;
       setStatus(AiStatus.LOADING);
 
       try {
-        const notes = await getNotes(query);
+        const notes = await getNotes(userQuestion);
 
+        // Store current message info for regeneration before modifying
         const currentAssistantMessage = conversation[messageIndex];
         const currentContent = currentAssistantMessage.content;
 
         if (notes.length === 0 && conversation.length === 0) {
           setStatus(AiStatus.GENERATING);
 
+          // Prepare a new answer array without empty strings
           const newContent =
             typeof currentContent === 'string'
               ? [
@@ -548,6 +503,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
                   "I don't have enough information in my sources to answer this question.",
                 ];
 
+          // Update conversation with the complete answer
           setConversation((c) => {
             const newHistory = [...c];
             newHistory[messageIndex] = {
@@ -562,19 +518,25 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
           return;
         }
 
+        // Create the chat messages array using the helper function
         const chatMessages = createChatMessages(
-          question,
+          notes,
+          userQuestion,
           regeneratingIndex.current
         );
 
+        // Prepare the conversation for receiving a new answer
         setConversation((c) => {
           const newHistory = [...c];
           const assistantMessage = newHistory[messageIndex];
 
+          // Prepare for streaming - convert to array if needed and add empty string placeholder
           let newContent;
           if (typeof assistantMessage.content === 'string') {
+            // First regeneration: convert string to array with original content and add placeholder
             newContent = [assistantMessage.content, ''];
           } else if (Array.isArray(assistantMessage.content)) {
+            // Already an array, just add a placeholder
             newContent = [...assistantMessage.content, ''];
           }
 
@@ -618,7 +580,7 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
         regeneratingIndex.current = null;
       }
     },
-    [getNotes, createChatMessages]
+    [conversation, getNotes, createChatMessages]
   );
 
   const resetChat = () => {
@@ -630,44 +592,41 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
   // Create a memoized context value to avoid unnecessary re-renders
   const contextValue = useMemo(
     () => ({
+      conversation,
       embeddingModel,
-      // Expose the ref values as normal properties
       embeddingProgress: embeddingProgressRef.current,
-      setEmbeddingModel,
-      getEmbeddings,
-      fetchEmbeddings,
-      saveEmbeddings,
-      clearConversation,
       generationModel,
       generationProgress: generationProgressRef.current,
-      setGenerationModel,
-      generateAnswer,
-      regenerateAnswer,
-      resetChat,
-      getNotes,
-      conversation,
-      status,
-      stopGeneration,
       progress,
       regeneratingIndex: regeneratingIndex.current,
-    }),
-    [
-      embeddingModel,
-      generationModel,
-      conversation,
       status,
-      progress,
-      clearConversation,
+      fetchEmbeddings,
       generateAnswer,
+      getEmbeddings,
+      getNotes,
       regenerateAnswer,
       resetChat,
-      getNotes,
-      stopGeneration,
-      getEmbeddings,
-      fetchEmbeddings,
       saveEmbeddings,
       setEmbeddingModel,
       setGenerationModel,
+      stopGeneration,
+    }),
+    [
+      conversation,
+      embeddingModel,
+      generationModel,
+      progress,
+      status,
+      fetchEmbeddings,
+      generateAnswer,
+      getEmbeddings,
+      getNotes,
+      regenerateAnswer,
+      resetChat,
+      saveEmbeddings,
+      setEmbeddingModel,
+      setGenerationModel,
+      stopGeneration,
     ]
   );
 
