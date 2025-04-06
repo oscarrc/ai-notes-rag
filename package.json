@@ -9,7 +9,8 @@
     "lint": "next lint",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
-    "test": "jest"
+    "test": "jest",
+    "submit": "./scripts/submit.sh"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.4.2",
