@@ -9,6 +9,8 @@ import {
   useState,
 } from 'react';
 
+import { format } from 'path';
+
 export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
 export const GENERATION_MODELS = [
   'Llama-3.2-1B-Instruct-finetuned',
@@ -276,22 +278,17 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
     question: string,
     history: HistoryMessage[]
   ) => {
-    const relevantHistory = history.slice(-6);
+    const contextWindow = history.slice(-6);
 
-    if (relevantHistory.length === 0) {
+    if (contextWindow.length === 0) {
       return question;
     }
 
-    const contextString = relevantHistory
-      .map((msg, index) => {
-        if (msg.role === 'system') return null;
-        // Add turn numbers to help model understand conversation flow
-        return `Turn ${index + 1} - ${msg.role === 'user' ? 'Human' : 'Assistant'}: ${Array.isArray(msg.content) ? msg.content.join('\n') : msg.content}`;
-      })
+    return contextWindow
+      .filter((msg) => msg.role === 'user')
+      .map((msg) => msg.content)
       .filter(Boolean)
       .join('\n\n');
-
-    return `Previous conversation:\n${contextString}\n\nCurrent question: ${question}`;
   };
 
   const getNotes = useCallback(
@@ -329,39 +326,46 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Create chat messages array for the model
   const createChatMessages = useCallback(
-    (
-      notes: EmbeddingRecord[],
-      question: string,
-      index?: number
-    ): HistoryMessage[] => {
+    (message: HistoryMessage, index?: number): HistoryMessage[] => {
       // Instruction-based system message
       const systemMessage: HistoryMessage = {
         role: 'system',
         content: SYSTEM_PROMPT,
       };
 
-      // Format notes as simple context
-      const formattedNotes = notes
-        .map((note) => `NOTE - ${note.name}:\n${note.content.trim()}`)
-        .join('\n\n');
-
-      // Fetch relevant history
       const relevantHistory = index
         ? conversation.slice(index, -5)
         : conversation.slice(-5);
 
-      // Structure as instruction + context + question
-      const userMessage: HistoryMessage = {
-        role: 'user',
-        content: `INSTRUCTION: Answer my question using only information from my notes and previous conversation context. If my notes don't contain the answer, tell me you don't have enough information.
+      relevantHistory.push(message);
 
-MY NOTES:
-${formattedNotes}
-
-MY QUESTION: ${question}`,
+      // Format notes as simple context
+      const formatContext = (ctx: EmbeddingRecord[]) => {
+        return ctx
+          .map((note) => `NOTE - ${note.name}:\n${note.content.trim()}`)
+          .join('\n\n');
       };
 
-      return [systemMessage, ...relevantHistory, userMessage];
+      const formattedHistory = relevantHistory.map((msg) => {
+        if (msg.role === 'system') return;
+        if (msg.role === 'assistant')
+          return {
+            role: 'assistant',
+            content: Array.isArray(msg.content)
+              ? msg.content.join(' ')
+              : msg.content,
+          };
+        if (msg.role === 'user')
+          return {
+            role: 'user',
+            content: `INSTRUCTION: Answer my question using only information from my notes and previous conversation context. If my notes don't contain the answer, tell me you don't have enough information.
+                      MY NOTES:
+                      ${formatContext(msg.context || [])}
+                      MY QUESTION: ${msg.content}`,
+          };
+      }) as HistoryMessage[];
+
+      return [systemMessage, ...formattedHistory];
     },
     [conversation]
   );
@@ -429,8 +433,9 @@ MY QUESTION: ${question}`,
       if (!workerRef.current) return;
 
       regeneratingIndex.current = null;
+      const userMessage: HistoryMessage = { role: 'user', content: question };
 
-      setConversation((c) => [...c, { role: 'user', content: question }]);
+      setConversation((c) => [...c, userMessage]);
 
       try {
         let query = question;
@@ -451,8 +456,17 @@ MY QUESTION: ${question}`,
           return;
         }
 
+        userMessage.context = notes;
+
+        setConversation((c) => {
+          const newHistory = [...c];
+          const lastUserMessageIndex = newHistory.length - 1;
+          newHistory[lastUserMessageIndex] = userMessage;
+          return newHistory;
+        });
+
         // Create the chat messages array using the helper function
-        const chatMessages = createChatMessages(notes, question);
+        const chatMessages = createChatMessages(userMessage);
 
         setConversation((c) => {
           const newHistory = [...c];
@@ -498,8 +512,8 @@ MY QUESTION: ${question}`,
       )
         return;
 
-      let question = conversation[messageIndex - 1].content as string;
-      let query = question;
+      let question = conversation[messageIndex - 1];
+      let query = question.content as string;
 
       regeneratingIndex.current = messageIndex;
 
@@ -549,7 +563,6 @@ MY QUESTION: ${question}`,
         }
 
         const chatMessages = createChatMessages(
-          notes,
           question,
           regeneratingIndex.current
         );

@@ -60,6 +60,7 @@ const Generation = () => {
   // Run generation test
   const testGeneration = async () => {
     setLoading(true);
+    clearConversation();
 
     try {
       showToast({
