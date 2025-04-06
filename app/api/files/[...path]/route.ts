@@ -1,5 +1,5 @@
+import { deleteEmbeddings, updateEmbeddingPaths, updateEmbeddingsFilename } from '../../embeddings/helper';
 import { deleteFile, getFile, moveFile, renameFile, updateFile } from '../helper';
-import { updateEmbeddingPaths, updateEmbeddingsFilename } from '../../embeddings/helper';
 
 import { NextResponse } from 'next/server';
 import path from 'path';
@@ -139,6 +139,7 @@ export async function DELETE(
 
   try {
     deleteFile(fullPath);
+    deleteEmbeddings(path.join(...filePath));
     return NextResponse.json({ message: 'File deleted successfully' });
   } catch (error) {
     console.error(error);

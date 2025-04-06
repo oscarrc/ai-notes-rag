@@ -152,8 +152,8 @@ async function generateAnswer(messages: any[]): Promise<{success: boolean, respo
   
   const outputs = await generator.generate({
       ...(inputs as any),
-      max_new_tokens: 512,
-      temperature: 0.1,
+      max_new_tokens: 1024,
+      temperature: 0,
       top_p: 0.9,
       repetition_penalty: 1.2,
       do_sample: false,

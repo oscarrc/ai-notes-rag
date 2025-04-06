@@ -25,7 +25,7 @@ const Search = () => {
 
   const { data, isLoading } = useQuery({
     queryKey: ['embeddings', debouncedQuery, embeddings],
-    queryFn: () => fetchEmbeddings(embeddings),
+    queryFn: () => fetchEmbeddings(embeddings, debouncedQuery),
     enabled: !!embeddings,
   });
 

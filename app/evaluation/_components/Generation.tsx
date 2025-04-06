@@ -25,7 +25,7 @@ import { useAi } from '../../_hooks/useAi';
 import { useToast } from '../../_hooks/useToast';
 
 const Generation = () => {
-  const { generateAnswer, status, stopGeneration, clearConversation } = useAi();
+  const { generateAnswer, status, stopGeneration, resetChat } = useAi();
 
   const { showToast } = useToast();
 
@@ -60,6 +60,7 @@ const Generation = () => {
   // Run generation test
   const testGeneration = async () => {
     setLoading(true);
+    resetChat();
 
     try {
       showToast({
@@ -169,7 +170,7 @@ const Generation = () => {
 
     const runTest = async () => {
       if (generationProgress >= testQueries.length) {
-        clearConversation();
+        resetChat();
         setRunGenerationTests(false);
         setGenerationProgress(0);
         setLoading(false);
@@ -196,7 +197,7 @@ const Generation = () => {
     setLoading(false);
 
     await stopGeneration();
-    clearConversation();
+    resetChat();
   };
 
   // Reset test handlers
