@@ -33,12 +33,11 @@ type PendingRequest = {
 const SYSTEM_PROMPT = `
 You are an AI assistant that helps answer questions based on the user's personal notes. 
 Follow these instructions carefully:
-1. Only use information found in the user's notes. Do not infer or add extra information.
+1. Only use information found in the user's notes
 2. If the notes don't contain the answer, say "I don't have enough information in your notes to answer this question."
 3. Never make up information not present in the notes
 4. Provide a complete response based on one or more notes
-5. Do not provide a response that is not based on the notes
-6. If the notes contain conflicting information, provide a balanced response that acknowledges the different perspectives.
+5. Do not provide a response that is not based on the notesr.
 `;
 
 export const AiProvider = ({ children }: { children: React.ReactNode }) => {
@@ -333,6 +332,13 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
       const previousConversation = index
         ? conversation.slice(0, index)
         : conversation;
+
+      previousConversation.map((message) => ({
+        ...message,
+        content: Array.isArray(message.content)
+          ? message.content.at(-1)
+          : message.content,
+      }));
 
       return [systemMessage, ...previousConversation, userMessage];
     },
