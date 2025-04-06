@@ -9,8 +9,6 @@ import {
   useState,
 } from 'react';
 
-import { format } from 'path';
-
 export const EMBEDDING_MODELS = ['all-MiniLM-L6-v2'];
 export const GENERATION_MODELS = [
   'Llama-3.2-1B-Instruct-finetuned',
@@ -284,11 +282,13 @@ export const AiProvider = ({ children }: { children: React.ReactNode }) => {
       return question;
     }
 
-    return contextWindow
-      .filter((msg) => msg.role === 'user')
-      .map((msg) => msg.content)
-      .filter(Boolean)
-      .join('\n\n');
+    return (
+      contextWindow
+        .filter((msg) => msg.role === 'user')
+        .map((msg) => msg.content)
+        .filter(Boolean)
+        .join('\n\n') + question
+    );
   };
 
   const getNotes = useCallback(
